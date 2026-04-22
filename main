@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Кликер · Питомцы с аксессуарами</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            transition: background-color 0.2s ease, border-color 0.2s, box-shadow 0.2s, color 0.2s;
+        }
+
+        :root {
+            --bg-gradient-start: #1a2634;
+            --bg-gradient-end: #0e1419;
+            --container-bg: rgba(22, 30, 38, 0.85);
+            --panel-bg: #0b1014;
+            --text-primary: #ffffff;
+            --text-secondary: #c0d0e0;
+            --accent-gold: #FFB347;
+            --accent-glow: #ffd966;
+            --card-bg: #1e2a32;
+            --card-border: #3a4a56;
+            --button-click-bg: radial-gradient(circle at 30% 20%, #ffd966, #e67e22);
+            --button-shadow: #b45f1b;
+            --buy-btn-bg: #3a6b47;
+            --buy-btn-shadow: #1e3a2f;
+            --reset-bg: #3c2e2b;
+            --reset-text: #ffb4a2;
+            --stat-bg: #0f181f;
+            --pet-bg: #1e2a32;
+            --tab-inactive: #2c3e44;
+            --tab-active: #ffb347;
+            --pet-card-bg: #2a3a44;
+        }
+
+        body.light-theme {
+            --bg-gradient-start: #f0f2f5;
+            --bg-gradient-end: #d6dce2;
+            --container-bg: rgba(245, 248, 250, 0.95);
+            --panel-bg: #ffffff;
+            --text-primary: #1e2a32;
+            --text-secondary: #4a6272;
+            --accent-gold: #e67e22;
+            --accent-glow: #f39c12;
+            --card-bg: #ffffff;
+            --card-border: #cfdde6;
+            --button-click-bg: radial-gradient(circle at 30% 20%, #ffe0a3, #f0b27a);
+            --button-shadow: #b45f1b;
+            --buy-btn-bg: #2c6e49;
+            --buy-btn-shadow: #1e462f;
+            --reset-bg: #e0cfc9;
+            --reset-text: #b85c3a;
+            --stat-bg: #eef2f5;
+            --pet-bg: #ffffff;
+            --tab-inactive: #cbd5e1;
+            --tab-active: #e67e22;
+            --pet-card-bg: #f8fafc;
+        }
+
+        body {
+            background: linear-gradient(145deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .game-container {
+            background: var(--container-bg);
+            backdrop-filter: blur(4px);
+            border-radius: 64px;
+            padding: 20px 20px 32px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 650px;
+            position: relative;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: var(--panel-bg);
+            padding: 8px;
+            border-radius: 60px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px 0;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: 0.1s;
+            font-family: inherit;
+        }
+        .tab-btn.active {
+            background: var(--tab-active);
+            color: #1e2a32;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .score-panel {
+            background: var(--panel-bg);
+            border-radius: 80px;
+            padding: 16px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.15), 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .score-label {
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .score-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-glow), var(--accent-gold));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            line-height: 1;
+            margin: 4px 0;
+        }
+        .click-area {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0 20px;
+        }
+        .click-btn {
+            background: var(--button-click-bg);
+            border: none;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d1b0a;
+            cursor: pointer;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.4), 0 4px 0 var(--button-shadow);
+            transition: transform 0.05s linear, box-shadow 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .click-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.4), 0 2px 0 var(--button-shadow);
+        }
+        .click-emoji {
+            font-size: 2.8rem;
+        }
+
+        .upgrade-card {
+            background: var(--card-bg);
+            border-radius: 48px;
+            padding: 16px 18px;
+            margin: 16px 0;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+            border: 1px solid var(--card-border);
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: var(--stat-bg);
+            padding: 10px 16px;
+            border-radius: 48px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 12px;
+        }
+        .buy-btn, .food-btn, .reset-btn, .add-pet-btn, .accessory-btn {
+            background: var(--buy-btn-bg);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 2px 0 var(--buy-btn-shadow);
+            transition: 0.05s linear;
+        }
+        .buy-btn:active, .food-btn:active, .reset-btn:active, .add-pet-btn:active, .accessory-btn:active {
+            transform: translateY(2px);
+        }
+        .reset-btn {
+            background: var(--reset-bg);
+            color: var(--reset-text);
+            width: 100%;
+            margin-top: 12px;
+            box-shadow: none;
+        }
+        .pet-section {
+            background: var(--pet-bg);
+            border-radius: 48px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--card-border);
+        }
+        .active-pet-area {
+            background: var(--stat-bg);
+            border-radius: 40px;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .active-pet-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .active-pet-emoji {
+            font-size: 2.5rem;
+        }
+        .active-pet-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        .hunger-bar {
+            display: flex;
+            gap: 8px;
+        }
+        .hunger-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #4caf50;
+        }
+        .hunger-dot.empty {
+            background: #6c757d;
+            opacity: 0.4;
+        }
+        .pet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 260px;
+            overflow-y: auto;
+            margin: 12px 0;
+        }
+        .pet-card {
+            background: var(--pet-card-bg);
+            border-radius: 32px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.05s;
+        }
+        .pet-card.active-pet-card {
+            border-color: var(--accent-gold);
+            background: var(--card-bg);
+        }
+        .pet-card-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .pet-card-emoji {
+            font-size: 2rem;
+        }
+        .pet-card-name {
+            font-weight: bold;
+        }
+        .pet-card-hunger {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .pet-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .edit-name-btn, .delete-pet {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .add-pet-area {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .accessories-area {
+            margin-top: 16px;
+            border-top: 1px solid var(--card-border);
+            padding-top: 12px;
+        }
+        .accessories-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .accessories-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .accessory-item {
+            background: var(--stat-bg);
+            border-radius: 40px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-item {
+            margin: 20px 0;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 20px;
+        }
+
+        /* Дождь из сердечек */
+        .heart-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .heart {
+            position: absolute;
+            font-size: 2rem;
+            animation: fall linear forwards;
+            color: #ff4d4d;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        @media (max-width: 480px) {
+            .click-btn { width: 140px; height: 140px; }
+            .click-emoji { font-size: 2rem; }
+            .score-value { font-size: 2.8rem; }
+            .hunger-dot { width: 22px; height: 22px; }
+            .active-pet-emoji { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="clicker">🍪 Кликер</button>
+        <button class="tab-btn" data-tab="pet">🐱 Питомцы</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Настройки</button>
+    </div>
+
+    <!-- Вкладка Кликер -->
+    <div id="tab-clicker" class="tab-content active">
+        <div class="score-panel">
+            <div class="score-label">🍪 ПЕЧЕНЕК (очки)</div>
+            <div class="score-value" id="scoreDisplay">0</div>
+        </div>
+        <div class="click-area">
+            <button class="click-btn" id="clickButton">
+                <span class="click-emoji">🐱</span>
+                <span>Клик!</span>
+            </button>
+        </div>
+        <div class="upgrade-card">
+            <div>
+                <div class="upgrade-name">🤖 Авто-кликер (бот)</div>
+                <div class="upgrade-desc">+1 печенька/сек за каждого</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="upgrade-price" id="botPrice">10 🍪</div>
+                <button class="buy-btn" id="buyBotBtn">Купить</button>
+            </div>
+        </div>
+        <div class="stats">
+            <span>🤖 Ботов: <strong id="botCount">0</strong></span>
+            <span>⚡ Клик/сек: <strong id="cps">0</strong></span>
+        </div>
+    </div>
+
+    <!-- Вкладка Питомцы -->
+    <div id="tab-pet" class="tab-content">
+        <div class="pet-section">
+            <div class="active-pet-area" id="activePetArea">
+                <!-- динамически -->
+            </div>
+            <div style="font-weight: bold; margin: 8px 0;">🐾 Мои питомцы</div>
+            <div id="petListContainer" class="pet-list"></div>
+            <div class="add-pet-area">
+                <button id="addCatBtn" class="add-pet-btn">➕ Купить котика (цена: <span id="catPrice">20</span> 🍪)</button>
+                <button id="addDogBtn" class="add-pet-btn">➕ Купить собачку (цена: <span id="dogPrice">20</span> 🍪)</button>
+            </div>
+            <div class="accessories-area" id="accessoriesArea">
+                <!-- аксессуары будут рендериться отдельно -->
+            </div>
+            <div class="stats" style="margin-top: 12px;">
+                <span>🍽️ Корм восстанавливает 1 деление</span>
+                <span>🥫 жид.корм 5🍪 | 🍖 сухой 10🍪</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка Настройки -->
+    <div id="tab-settings" class="tab-content">
+        <div class="settings-item">
+            <button id="resetBtn" class="reset-btn" style="width: auto; padding: 10px 25px;">⟳ Сбросить весь прогресс</button>
+        </div>
+        <div class="settings-item">
+            <button id="themeToggle" class="reset-btn" style="background: var(--buy-btn-bg); color: white;">🌓 Переключить тему</button>
+        </div>
+        <footer>Всё сохраняется автоматически</footer>
+    </div>
+</div>
+
+<script>
+    // ---------- Звуки через Web Audio ----------
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+    function playTone(freq, duration, volume = 0.2) {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(() => {
+                playToneInternal(freq, duration, volume);
+            });
+        } else {
+            playToneInternal(freq, duration, volume);
+        }
+    }
+    function playToneInternal(freq, duration, volume) {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        osc.start();
+        osc.stop(now + duration);
+    }
+    function playClick() { playTone(880, 0.08, 0.15); }      // высокий короткий
+    function playPurchase() { playTone(660, 0.12, 0.2); }    // средний
+    function playFeed() { playTone(523, 0.2, 0.2); }         // приятный
+    function playAccessory() { playTone(784, 0.15, 0.18); }  // радостный
+
+    // ---------- Игровое состояние ----------
+    let score = 0;
+    let bots = 0;
+    const BOT_BASE_PRICE = 10;
+
+    let pets = [];
+    let activePetId = null;
+    let nextPetId = 1;
+
+    let catBasePrice = 20;
+    let dogBasePrice = 20;
+
+    // Аксессуары: список доступных
+    const accessoriesList = [
+        { id: 'hat', name: 'Шляпа', emoji: '🎩', price: 30 },
+        { id: 'glasses', name: 'Очки', emoji: '👓', price: 50 },
+        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 40 },
+        { id: 'crown', name: 'Корона', emoji: '👑', price: 100 }
+    ];
+
+    // DOM
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const botCountSpan = document.getElementById('botCount');
+    const cpsSpan = document.getElementById('cps');
+    const buyBotBtn = document.getElementById('buyBotBtn');
+    const botPriceSpan = document.getElementById('botPrice');
+    const clickBtn = document.getElementById('clickButton');
+    const resetBtn = document.getElementById('resetBtn');
+    const activePetArea = document.getElementById('activePetArea');
+    const petListContainer = document.getElementById('petListContainer');
+    const addCatBtn = document.getElementById('addCatBtn');
+    const addDogBtn = document.getElementById('addDogBtn');
+    const catPriceSpan = document.getElementById('catPrice');
+    const dogPriceSpan = document.getElementById('dogPrice');
+    const accessoriesArea = document.getElementById('accessoriesArea');
+
+    // --- Вспомогательные ---
+    function getCatPrice() { return catBasePrice + pets.length * 5; }
+    function getDogPrice() { return dogBasePrice + pets.length * 5; }
+    function updatePetPricesUI() {
+        catPriceSpan.innerText = getCatPrice();
+        dogPriceSpan.innerText = getDogPrice();
+    }
+
+    // --- Питомцы ---
+    function addPet(type) {
+        let price = (type === 'cat') ? getCatPrice() : getDogPrice();
+        if (score >= price) {
+            score -= price;
+            const newPet = {
+                id: nextPetId++,
+                type: type,
+                name: type === 'cat' ? 'Котик' : 'Пёсик',
+                hunger: 3,
+                emoji: type === 'cat' ? '🐱' : '🐶',
+                accessory: null
+            };
+            pets.push(newPet);
+            if (activePetId === null) activePetId = newPet.id;
+            saveGame();
+            updateUI();
+            renderPetsAndAccessories();
+            playPurchase();
+            showMessage(`🎉 Вы купили нового ${type === 'cat' ? 'котика' : 'пёсика'}!`, '#4caf50');
+        } else {
+            showMessage(`Не хватает печенек!`, '#f0ad4e');
+            playTone(440, 0.1, 0.1); // ошибка
+        }
+    }
+
+    function deletePet(petId) {
+        if (pets.length === 1) {
+            showMessage(`Нельзя удалить последнего питомца!`, '#d9534f');
+            return;
+        }
+        const index = pets.findIndex(p => p.id === petId);
+        if (index !== -1) {
+            pets.splice(index, 1);
+            if (activePetId === petId) {
+                activePetId = pets[0]?.id || null;
+            }
+            renderPetsAndAccessories();
+            saveGame();
+            updateUI();
+            showMessage(`Питомец удалён`, '#6c757d');
+        }
+    }
+
+    function setActivePet(petId) {
+        activePetId = petId;
+        renderPetsAndAccessories();
+        updateUI();
+        saveGame();
+    }
+
+    function editPetName(petId) {
+        const pet = pets.find(p => p.id === petId);
+        if (!pet) return;
+        let newName = prompt('Введите новое имя питомца:', pet.name);
+        if (newName && newName.trim() !== '') {
+            pet.name = newName.trim().substring(0, 20);
+            renderPetsAndAccessories();
+            saveGame();
+            showMessage(`Имя изменено на ${pet.name}`, '#4caf50');
+        }
+    }
+
+    function feedActivePet(amount) {
+        if (!activePetId) return false;
+        const pet = pets.find(p => p.id === activePetId);
+        if (!pet) return false;
+        let newHunger = Math.min(3, pet.hunger + amount);
+        if (newHunger === pet.hunger) return false;
+        pet.hunger = newHunger;
+        renderPetsAndAccessories();
+        updateUI();
+        saveGame();
+        playFeed();
+        startHeartRain();  // дождь при кормлении
+        showMessage(`🍽️ ${pet.name} покормлен!`, '#4caf50');
+        return true;
+    }
+
+    function decreaseHungerForActive() {
+        if (!activePetId) return;
+        const pet = pets.find(p => p.id === activePetId);
+        if (pet && pet.hunger > 0) {
+            pet.hunger--;
+            renderPetsAndAccessories();
+            updateUI();
+            saveGame();
+            if (pet.hunger === 0) {
+                showMessage(`😿 ${pet.name} голоден! Покормите питомца.`, '#d9534f');
+            }
+        }
+    }
+
+    // Аксессуары
+    function buyAccessory(accessoryId) {
+        if (!activePetId) return;
+        const pet = pets.find(p => p.id === activePetId);
+        if (!pet) return;
+        const accessory = accessoriesList.find(a => a.id === accessoryId);
+        if (!accessory) return;
+        if (score >= accessory.price) {
+            if (pet.accessory === accessoryId) {
+                showMessage(`У ${pet.name} уже надет ${accessory.name}`, '#f0ad4e');
+                return;
+            }
+            score -= accessory.price;
+            pet.accessory = accessoryId;
+            renderPetsAndAccessories();
+            updateUI();
+            saveGame();
+            playAccessory();
+            showMessage(`🎀 ${pet.name} теперь носит ${accessory.name}!`, '#4caf50');
+        } else {
+            showMessage(`Не хватает печенек для ${accessory.name}`, '#f0ad4e');
+        }
+    }
+
+    function removeAccessory() {
+        if (!activePetId) return;
+        const pet = pets.find(p => p.id === activePetId);
+        if (!pet) return;
+        if (pet.accessory) {
+            pet.accessory = null;
+            renderPetsAndAccessories();
+            saveGame();
+            playAccessory();
+            showMessage(`Аксессуар снят с ${pet.name}`, '#6c757d');
+        } else {
+            showMessage(`У ${pet.name} нет аксессуара`, '#f0ad4e');
+        }
+    }
+
+    function getPetDisplayEmoji(pet) {
+        let base = pet.emoji;
+        if (pet.accessory) {
+            const acc = accessoriesList.find(a => a.id === pet.accessory);
+            if (acc) base += ' ' + acc.emoji;
+        }
+        return base;
+    }
+
+    // --- Отрисовка всех питомцев, активной области и аксессуаров ---
+    function renderPetsAndAccessories() {
+        // Активный питомец
+        const activePet = pets.find(p => p.id === activePetId);
+        if (activePet) {
+            const hungerDots = [];
+            for (let i=0; i<3; i++) {
+                hungerDots.push(`<div class="hunger-dot ${i >= activePet.hunger ? 'empty' : ''}"></div>`);
+            }
+            activePetArea.innerHTML = `
+                <div class="active-pet-info">
+                    <div class="active-pet-emoji">${getPetDisplayEmoji(activePet)}</div>
+                    <div>
+                        <div class="active-pet-name">${escapeHtml(activePet.name)}</div>
+                        <div class="hunger-bar">${hungerDots.join('')}</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="feedWetBtn" class="food-btn">🥫 Жид.корм (5)</button>
+                    <button id="feedDryBtn" class="food-btn">🍖 Сухой (10)</button>
+                </div>
+            `;
+            document.getElementById('feedWetBtn')?.addEventListener('click', () => buyFoodForActive(5, 1));
+            document.getElementById('feedDryBtn')?.addEventListener('click', () => buyFoodForActive(10, 1));
+        } else {
+            activePetArea.innerHTML = `<div>Нет питомцев. Купите первого!</div>`;
+        }
+
+        // Список питомцев
+        if (pets.length === 0) {
+            petListContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет питомцев. Купите котика или собачку!</div>';
+        } else {
+            petListContainer.innerHTML = pets.map(pet => `
+                <div class="pet-card ${activePetId === pet.id ? 'active-pet-card' : ''}" data-id="${pet.id}">
+                    <div class="pet-card-info">
+                        <div class="pet-card-emoji">${getPetDisplayEmoji(pet)}</div>
+                        <div>
+                            <div class="pet-card-name">${escapeHtml(pet.name)}</div>
+                            <div class="pet-card-hunger">Сытость: ${pet.hunger}/3</div>
+                        </div>
+                    </div>
+                    <div class="pet-card-actions">
+                        <button class="edit-name-btn" data-id="${pet.id}" title="Изменить имя">✏️</button>
+                        <button class="delete-pet" data-id="${pet.id}" title="Удалить">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            document.querySelectorAll('.pet-card').forEach(card => {
+                const id = parseInt(card.dataset.id);
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('edit-name-btn') || e.target.classList.contains('delete-pet')) return;
+                    setActivePet(id);
+                });
+            });
+            document.querySelectorAll('.edit-name-btn').forEach(btn => {
+                const id = parseInt(btn.dataset.id);
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editPetName(id);
+                });
+            });
+            document.querySelectorAll('.delete-pet').forEach(btn => {
+                const id = parseInt(btn.dataset.id);
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deletePet(id);
+                });
+            });
+        }
+
+        // Аксессуары для активного питомца
+        if (activePet) {
+            const currentAcc = activePet.accessory;
+            const accHtml = `
+                <div class="accessories-title">🎀 Аксессуары для ${escapeHtml(activePet.name)}</div>
+                <div class="accessories-grid">
+                    ${accessoriesList.map(acc => `
+                        <div class="accessory-item">
+                            <span>${acc.emoji} ${acc.name}</span>
+                            <button class="accessory-btn" data-acc="${acc.id}" ${currentAcc === acc.id ? 'disabled style="opacity:0.6;"' : ''}>${currentAcc === acc.id ? 'Надето' : acc.price+'🍪'}</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button id="removeAccBtn" class="food-btn" style="background: #7f8c8d;">Снять аксессуар</button>
+            `;
+            accessoriesArea.innerHTML = accHtml;
+            accessoriesList.forEach(acc => {
+                const btn = document.querySelector(`.accessory-btn[data-acc="${acc.id}"]`);
+                if (btn && !btn.disabled) {
+                    btn.addEventListener('click', () => buyAccessory(acc.id));
+                }
+            });
+            const removeBtn = document.getElementById('removeAccBtn');
+            if (removeBtn) removeBtn.addEventListener('click', removeAccessory);
+        } else {
+            accessoriesArea.innerHTML = '<div class="accessories-title">🎀 Выберите питомца для аксессуаров</div>';
+        }
+    }
+
+    function buyFoodForActive(price, gain) {
+        if (score >= price) {
+            if (feedActivePet(gain)) {
+                score -= price;
+                updateUI();
+                saveGame();
+            } else {
+                showMessage(`Питомец уже сыт!`, '#f0ad4e');
+            }
+        } else {
+            showMessage(`Не хватает печенек!`, '#f0ad4e');
+        }
+    }
+
+    // --- Дождь из сердечек ---
+    let rainActive = false;
+    function startHeartRain() {
+        if (rainActive) return;
+        rainActive = true;
+        const container = document.createElement('div');
+        container.className = 'heart-rain';
+        document.body.appendChild(container);
+        const heartCount = 40;
+        for (let i=0; i<heartCount; i++) {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDuration = 1 + Math.random() * 2 + 's';
+            heart.style.fontSize = (1 + Math.random() * 2) + 'rem';
+            heart.style.opacity = 0.5 + Math.random() * 0.5;
+            container.appendChild(heart);
+        }
+        setTimeout(() => {
+            container.remove();
+            rainActive = false;
+        }, 2500);
+    }
+
+    // --- Основные игровые функции ---
+    function getBotPrice() { return BOT_BASE_PRICE + bots * 2; }
+
+    function updateUI() {
+        scoreDisplay.innerText = Math.floor(score);
+        botCountSpan.innerText = bots;
+        botPriceSpan.innerText = getBotPrice() + ' 🍪';
+        cpsSpan.innerText = bots;
+        buyBotBtn.disabled = (score < getBotPrice());
+        updatePetPricesUI();
+    }
+
+    function addScore(amount) {
+        score += amount;
+        updateUI();
+        saveGame();
+    }
+
+    function buyBot() {
+        let price = getBotPrice();
+        if (score >= price) {
+            score -= price;
+            bots++;
+            updateUI();
+            saveGame();
+            playPurchase();
+            if (navigator.vibrate) navigator.vibrate(30);
+        } else {
+            playTone(440, 0.1, 0.1);
+        }
+    }
+
+    function handleClick() {
+        addScore(1);
+        playClick();
+        clickBtn.style.transform = 'scale(0.96)';
+        setTimeout(() => { if(clickBtn) clickBtn.style.transform = ''; }, 90);
+    }
+
+    // --- Сохранение / загрузка ---
+    function saveGame() {
+        const gameState = {
+            score, bots,
+            pets: pets.map(p => ({ ...p })),
+            activePetId,
+            nextPetId
+        };
+        localStorage.setItem('clickerGame', JSON.stringify(gameState));
+    }
+
+    function loadGame() {
+        const saved = localStorage.getItem('clickerGame');
+        if (saved) {
+            try {
+                const state = JSON.parse(saved);
+                score = state.score ?? 0;
+                bots = state.bots ?? 0;
+                if (state.pets && state.pets.length) {
+                    pets = state.pets;
+                    activePetId = state.activePetId ?? pets[0]?.id;
+                    nextPetId = state.nextPetId ?? (Math.max(...pets.map(p=>p.id),0)+1);
+                } else {
+                    pets = [{
+                        id: nextPetId++,
+                        type: 'cat',
+                        name: 'Бобби',
+                        hunger: 3,
+                        emoji: '🐱',
+                        accessory: null
+                    }];
+                    activePetId = pets[0].id;
+                }
+            } catch(e) {}
+        } else {
+            pets = [{
+                id: nextPetId++,
+                type: 'cat',
+                name: 'Бобби',
+                hunger: 3,
+                emoji: '🐱',
+                accessory: null
+            }];
+            activePetId = pets[0].id;
+        }
+        if (isNaN(score)) score = 0;
+        if (isNaN(bots)) bots = 0;
+        if (!pets.length) {
+            pets = [{ id: nextPetId++, type: 'cat', name: 'Бобби', hunger: 3, emoji: '🐱', accessory: null }];
+            activePetId = pets[0].id;
+        }
+        if (!pets.some(p => p.id === activePetId)) activePetId = pets[0].id;
+        updateUI();
+        renderPetsAndAccessories();
+    }
+
+    function resetGame() {
+        if (confirm('Сбросить ВСЁ: печеньки, ботов, всех питомцев?')) {
+            score = 0;
+            bots = 0;
+            nextPetId = 1;
+            pets = [{
+                id: nextPetId++,
+                type: 'cat',
+                name: 'Бобби',
+                hunger: 3,
+                emoji: '🐱',
+                accessory: null
+            }];
+            activePetId = pets[0].id;
+            updateUI();
+            renderPetsAndAccessories();
+            saveGame();
+            showMessage('🧹 Прогресс сброшен', '#2c2e3a');
+        }
+    }
+
+    // --- Тема ---
+    function initTheme() {
+        const saved = localStorage.getItem('clickerTheme');
+        if (saved === 'light') {
+            document.body.classList.add('light-theme');
+        } else {
+            document.body.classList.remove('light-theme');
+        }
+    }
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        localStorage.setItem('clickerTheme', isLight ? 'light' : 'dark');
+    }
+
+    // --- Вкладки ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+    }
+
+    function showMessage(text, bgColor) {
+        const msg = document.createElement('div');
+        msg.innerText = text;
+        msg.style.position = 'fixed';
+        msg.style.bottom = '70px';
+        msg.style.left = '50%';
+        msg.style.transform = 'translateX(-50%)';
+        msg.style.backgroundColor = bgColor;
+        msg.style.color = 'white';
+        msg.style.padding = '6px 18px';
+        msg.style.borderRadius = '60px';
+        msg.style.fontWeight = 'bold';
+        msg.style.zIndex = '9999';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 1500);
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // --- Таймеры ---
+    let intervalId = null;
+    function startAutoTick() {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => {
+            if (bots > 0) {
+                addScore(bots);
+                showFloatingNumber(bots);
+            }
+        }, 1000);
+    }
+
+    let hungerInterval = null;
+    function startHungerTick() {
+        if (hungerInterval) clearInterval(hungerInterval);
+        hungerInterval = setInterval(() => decreaseHungerForActive(), 10000);
+    }
+
+    function showFloatingNumber(amount) {
+        if (!amount) return;
+        const el = document.createElement('div');
+        el.innerText = `+${amount}`;
+        el.style.position = 'fixed';
+        el.style.left = '50%';
+        el.style.top = '40%';
+        el.style.transform = 'translateX(-50%)';
+        el.style.fontSize = '2rem';
+        el.style.fontWeight = 'bold';
+        el.style.color = '#FFD966';
+        el.style.textShadow = '0 0 5px black';
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '1000';
+        el.style.opacity = '1';
+        el.style.transition = 'all 0.6s ease-out';
+        document.body.appendChild(el);
+        requestAnimationFrame(() => {
+            el.style.top = '20%';
+            el.style.opacity = '0';
+        });
+        setTimeout(() => el.remove(), 600);
+    }
+
+    // --- Обработчики событий ---
+    clickBtn?.addEventListener('click', handleClick);
+    buyBotBtn?.addEventListener('click', buyBot);
+    resetBtn?.addEventListener('click', resetGame);
+    document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+    addCatBtn?.addEventListener('click', () => addPet('cat'));
+    addDogBtn?.addEventListener('click', () => addPet('dog'));
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // Инициализация аудио после первого клика (политика браузера)
+    document.body.addEventListener('click', () => {
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        } else if (!audioCtx) {
+            initAudio();
+        }
+    }, { once: true });
+
+    // --- Запуск ---
+    loadGame();
+    startAutoTick();
+    startHungerTick();
+    setInterval(() => saveGame(), 10000);
+    initTheme();
+    initAudio(); // подготовка, но будет suspended до первого клика
+</script>
+</body>
+</html>
