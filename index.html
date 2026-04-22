@@ -1,51 +1,16 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <!-- Добавляем Firebase SDK -->
-<script type="module">
-    // Импортируем функции Firebase, которые мы будем использовать
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
-    import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
-
-    // Конфигурация Firebase (скопируйте сюда ваш объект из консоли Firebase)
-    const firebaseConfig = {
-       apiKey: "AIzaSyD4eYeInogumVcDp8SyuSRXgWq7rbzIoL4",
-    authDomain: "clicker-28573.firebaseapp.com",
-    projectId: "clicker-28573",
-    storageBucket: "clicker-28573.firebasestorage.app",
-    messagingSenderId: "1002257664870",
-    appId: "1:1002257664870:web:c05436dc9dd6d12a34d6a7",
-    measurementId: "G-SQWP6D1TH8"
-    };
-
-    // Инициализация Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // Сделаем объекты auth и db глобальными, чтобы они были доступны из других скриптов
-    window.auth = auth;
-    window.db = db;
-    // Делаем функции аутентификации глобальными
-    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-    window.signOut = signOut;
-    window.onAuthStateChanged = onAuthStateChanged;
-    window.setDoc = setDoc;
-    window.getDoc = getDoc;
-    window.doc = doc;
-</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Кликер · Питомцы с аксессуарами</title>
+    <title>Кликер · Питомцы с аксессуарами · Облачное сохранение</title>
     <style>
+        /* Все ваши стили остаются без изменений, я их сокращу для читаемости, но вы можете оставить свои */
         * {
             box-sizing: border-box;
             user-select: none;
             transition: background-color 0.2s ease, border-color 0.2s, box-shadow 0.2s, color 0.2s;
         }
-
         :root {
             --bg-gradient-start: #1a2634;
             --bg-gradient-end: #0e1419;
@@ -69,7 +34,6 @@
             --tab-active: #ffb347;
             --pet-card-bg: #2a3a44;
         }
-
         body.light-theme {
             --bg-gradient-start: #f0f2f5;
             --bg-gradient-end: #d6dce2;
@@ -93,7 +57,6 @@
             --tab-active: #e67e22;
             --pet-card-bg: #f8fafc;
         }
-
         body {
             background: linear-gradient(145deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
@@ -105,7 +68,6 @@
             padding: 20px;
             color: var(--text-primary);
         }
-
         .game-container {
             background: var(--container-bg);
             backdrop-filter: blur(4px);
@@ -116,7 +78,6 @@
             max-width: 650px;
             position: relative;
         }
-
         .tabs {
             display: flex;
             gap: 8px;
@@ -155,7 +116,6 @@
             from { opacity: 0; transform: translateY(5px);}
             to { opacity: 1; transform: translateY(0);}
         }
-
         .score-panel {
             background: var(--panel-bg);
             border-radius: 80px;
@@ -210,7 +170,6 @@
         .click-emoji {
             font-size: 2.8rem;
         }
-
         .upgrade-card {
             background: var(--card-bg);
             border-radius: 48px;
@@ -383,8 +342,6 @@
             color: var(--text-secondary);
             margin-top: 20px;
         }
-
-        /* Дождь из сердечек */
         .heart-rain {
             position: fixed;
             top: 0;
@@ -405,7 +362,6 @@
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
-
         @media (max-width: 480px) {
             .click-btn { width: 140px; height: 140px; }
             .click-emoji { font-size: 2rem; }
@@ -454,18 +410,14 @@
     <!-- Вкладка Питомцы -->
     <div id="tab-pet" class="tab-content">
         <div class="pet-section">
-            <div class="active-pet-area" id="activePetArea">
-                <!-- динамически -->
-            </div>
+            <div class="active-pet-area" id="activePetArea"></div>
             <div style="font-weight: bold; margin: 8px 0;">🐾 Мои питомцы</div>
             <div id="petListContainer" class="pet-list"></div>
             <div class="add-pet-area">
                 <button id="addCatBtn" class="add-pet-btn">➕ Купить котика (цена: <span id="catPrice">20</span> 🍪)</button>
                 <button id="addDogBtn" class="add-pet-btn">➕ Купить собачку (цена: <span id="dogPrice">20</span> 🍪)</button>
             </div>
-            <div class="accessories-area" id="accessoriesArea">
-                <!-- аксессуары будут рендериться отдельно -->
-            </div>
+            <div class="accessories-area" id="accessoriesArea"></div>
             <div class="stats" style="margin-top: 12px;">
                 <span>🍽️ Корм восстанавливает 1 деление</span>
                 <span>🥫 жид.корм 5🍪 | 🍖 сухой 10🍪</span>
@@ -485,25 +437,91 @@
     </div>
 </div>
 
-<script>
-    // ---------- Звуки через Web Audio ----------
+<!-- Блок для входа/регистрации (РАЗМЕЩЁН ПРАВИЛЬНО - ВНУТРИ BODY, НО ВНЕ GAME-CONTAINER) -->
+<div id="auth-section" style="background: var(--panel-bg); border-radius: 48px; padding: 16px; margin-bottom: 20px; max-width: 650px; margin-left: auto; margin-right: auto;">
+    <div id="login-form">
+        <h3 style="margin-top: 0;">Вход в игру</h3>
+        <input type="email" id="login-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <input type="password" id="login-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <button id="login-btn" class="buy-btn" style="width: 100%;">Войти</button>
+        <p style="text-align: center; margin-top: 10px;">Нет аккаунта? <a href="#" id="show-register" style="color: var(--accent-gold);">Зарегистрироваться</a></p>
+    </div>
+    <div id="register-form" style="display: none;">
+        <h3 style="margin-top: 0;">Регистрация</h3>
+        <input type="email" id="reg-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <input type="password" id="reg-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <button id="register-btn" class="buy-btn" style="width: 100%;">Зарегистрироваться</button>
+        <p style="text-align: center; margin-top: 10px;"><a href="#" id="show-login" style="color: var(--accent-gold);">Уже есть аккаунт? Войти</a></p>
+    </div>
+    <div id="user-info" style="display: none; text-align: center;">
+        <p>Привет, <span id="user-email"></span>!</p>
+        <button id="logout-btn" class="reset-btn" style="background: #7f8c8d; color: white;">Выйти</button>
+    </div>
+</div>
+
+<script type="module">
+    // ---------- 1. Инициализация Firebase ----------
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
+    import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD4eYeInogumVcDp8SyuSRXgWq7rbzIoL4",
+        authDomain: "clicker-28573.firebaseapp.com",
+        projectId: "clicker-28573",
+        storageBucket: "clicker-28573.firebasestorage.app",
+        messagingSenderId: "1002257664870",
+        appId: "1:1002257664870:web:c05436dc9dd6d12a34d6a7",
+        measurementId: "G-SQWP6D1TH8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ---------- 2. Игровые переменные ----------
+    let score = 0;
+    let bots = 0;
+    const BOT_BASE_PRICE = 10;
+    let pets = [];
+    let activePetId = null;
+    let nextPetId = 1;
+    let catBasePrice = 20;
+    let dogBasePrice = 20;
+
+    const accessoriesList = [
+        { id: 'hat', name: 'Шляпа', emoji: '🎩', price: 30 },
+        { id: 'glasses', name: 'Очки', emoji: '👓', price: 50 },
+        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 40 },
+        { id: 'crown', name: 'Корона', emoji: '👑', price: 100 }
+    ];
+
+    // DOM элементы
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const botCountSpan = document.getElementById('botCount');
+    const cpsSpan = document.getElementById('cps');
+    const buyBotBtn = document.getElementById('buyBotBtn');
+    const botPriceSpan = document.getElementById('botPrice');
+    const clickBtn = document.getElementById('clickButton');
+    const resetBtn = document.getElementById('resetBtn');
+    const activePetArea = document.getElementById('activePetArea');
+    const petListContainer = document.getElementById('petListContainer');
+    const addCatBtn = document.getElementById('addCatBtn');
+    const addDogBtn = document.getElementById('addDogBtn');
+    const catPriceSpan = document.getElementById('catPrice');
+    const dogPriceSpan = document.getElementById('dogPrice');
+    const accessoriesArea = document.getElementById('accessoriesArea');
+
+    // ---------- 3. Звуки (Web Audio) ----------
     let audioCtx = null;
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     function playTone(freq, duration, volume = 0.2) {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
+        if (!audioCtx) initAudio();
         if (audioCtx.state === 'suspended') {
-            audioCtx.resume().then(() => {
-                playToneInternal(freq, duration, volume);
-            });
+            audioCtx.resume().then(() => playToneInternal(freq, duration, volume));
         } else {
             playToneInternal(freq, duration, volume);
         }
@@ -520,48 +538,38 @@
         osc.start();
         osc.stop(now + duration);
     }
-    function playClick() { playTone(880, 0.08, 0.15); }      // высокий короткий
-    function playPurchase() { playTone(660, 0.12, 0.2); }    // средний
-    function playFeed() { playTone(523, 0.2, 0.2); }         // приятный
-    function playAccessory() { playTone(784, 0.15, 0.18); }  // радостный
+    function playClick() { playTone(880, 0.08, 0.15); }
+    function playPurchase() { playTone(660, 0.12, 0.2); }
+    function playFeed() { playTone(523, 0.2, 0.2); }
+    function playAccessory() { playTone(784, 0.15, 0.18); }
 
-    // ---------- Игровое состояние ----------
-    let score = 0;
-    let bots = 0;
-    const BOT_BASE_PRICE = 10;
+    // ---------- 4. Вспомогательные функции ----------
+    function showMessage(text, bgColor) {
+        const msg = document.createElement('div');
+        msg.innerText = text;
+        msg.style.position = 'fixed';
+        msg.style.bottom = '70px';
+        msg.style.left = '50%';
+        msg.style.transform = 'translateX(-50%)';
+        msg.style.backgroundColor = bgColor;
+        msg.style.color = 'white';
+        msg.style.padding = '6px 18px';
+        msg.style.borderRadius = '60px';
+        msg.style.fontWeight = 'bold';
+        msg.style.zIndex = '9999';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 1500);
+    }
 
-    let pets = [];
-    let activePetId = null;
-    let nextPetId = 1;
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
 
-    let catBasePrice = 20;
-    let dogBasePrice = 20;
-
-    // Аксессуары: список доступных
-    const accessoriesList = [
-        { id: 'hat', name: 'Шляпа', emoji: '🎩', price: 30 },
-        { id: 'glasses', name: 'Очки', emoji: '👓', price: 50 },
-        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 40 },
-        { id: 'crown', name: 'Корона', emoji: '👑', price: 100 }
-    ];
-
-    // DOM
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const botCountSpan = document.getElementById('botCount');
-    const cpsSpan = document.getElementById('cps');
-    const buyBotBtn = document.getElementById('buyBotBtn');
-    const botPriceSpan = document.getElementById('botPrice');
-    const clickBtn = document.getElementById('clickButton');
-    const resetBtn = document.getElementById('resetBtn');
-    const activePetArea = document.getElementById('activePetArea');
-    const petListContainer = document.getElementById('petListContainer');
-    const addCatBtn = document.getElementById('addCatBtn');
-    const addDogBtn = document.getElementById('addDogBtn');
-    const catPriceSpan = document.getElementById('catPrice');
-    const dogPriceSpan = document.getElementById('dogPrice');
-    const accessoriesArea = document.getElementById('accessoriesArea');
-
-    // --- Вспомогательные ---
     function getCatPrice() { return catBasePrice + pets.length * 5; }
     function getDogPrice() { return dogBasePrice + pets.length * 5; }
     function updatePetPricesUI() {
@@ -569,7 +577,125 @@
         dogPriceSpan.innerText = getDogPrice();
     }
 
-    // --- Питомцы ---
+    // ---------- 5. Облачное сохранение и загрузка (Firebase) ----------
+    async function saveGameProgress(userId) {
+        if (!userId) return;
+        const docRef = doc(db, 'users', userId);
+        const gameState = {
+            score: score,
+            bots: bots,
+            pets: pets,
+            activePetId: activePetId,
+            lastUpdated: new Date().toISOString()
+        };
+        await setDoc(docRef, gameState, { merge: true });
+        console.log("Прогресс сохранен в облаке!");
+    }
+
+    async function loadGameProgress(userId) {
+        if (!userId) return;
+        const docRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            score = data.score ?? 0;
+            bots = data.bots ?? 0;
+            if (data.pets && data.pets.length) {
+                pets = data.pets;
+                activePetId = data.activePetId ?? pets[0]?.id;
+                nextPetId = Math.max(...pets.map(p=>p.id), 0) + 1;
+            } else {
+                initDefaultPet();
+            }
+            updateUI();
+            renderPetsAndAccessories();
+            showMessage(`Прогресс загружен! У вас ${Math.floor(score)} печенек.`, '#4caf50');
+        } else {
+            console.log("Нет сохранений, начинаем новую игру!");
+            await saveGameProgress(userId);
+        }
+    }
+
+    function initDefaultPet() {
+        pets = [{
+            id: nextPetId++,
+            type: 'cat',
+            name: 'Бобби',
+            hunger: 3,
+            emoji: '🐱',
+            accessory: null
+        }];
+        activePetId = pets[0].id;
+    }
+
+    // ---------- 6. Основные игровые функции ----------
+    function getBotPrice() { return BOT_BASE_PRICE + bots * 2; }
+
+    function updateUI() {
+        scoreDisplay.innerText = Math.floor(score);
+        botCountSpan.innerText = bots;
+        botPriceSpan.innerText = getBotPrice() + ' 🍪';
+        cpsSpan.innerText = bots;
+        buyBotBtn.disabled = (score < getBotPrice());
+        updatePetPricesUI();
+    }
+
+    function addScore(amount) {
+        score += amount;
+        updateUI();
+        saveGame(); // вызовет и локальное, и облачное сохранение
+    }
+
+    function saveGame() {
+        // Локальное сохранение
+        const gameState = { score, bots, pets, activePetId, nextPetId };
+        localStorage.setItem('clickerGame', JSON.stringify(gameState));
+        // Облачное, если пользователь авторизован
+        if (auth.currentUser) {
+            saveGameProgress(auth.currentUser.uid);
+        }
+    }
+
+    function loadGame() {
+        const saved = localStorage.getItem('clickerGame');
+        if (saved) {
+            try {
+                const state = JSON.parse(saved);
+                score = state.score ?? 0;
+                bots = state.bots ?? 0;
+                if (state.pets && state.pets.length) {
+                    pets = state.pets;
+                    activePetId = state.activePetId ?? pets[0]?.id;
+                    nextPetId = state.nextPetId ?? (Math.max(...pets.map(p=>p.id),0)+1);
+                } else {
+                    initDefaultPet();
+                }
+            } catch(e) {}
+        } else {
+            initDefaultPet();
+        }
+        if (isNaN(score)) score = 0;
+        if (isNaN(bots)) bots = 0;
+        if (!pets.length) initDefaultPet();
+        if (!pets.some(p => p.id === activePetId)) activePetId = pets[0].id;
+        updateUI();
+        renderPetsAndAccessories();
+    }
+
+    function resetGame() {
+        if (confirm('Сбросить ВСЁ: печеньки, ботов, всех питомцев?')) {
+            score = 0;
+            bots = 0;
+            nextPetId = 1;
+            initDefaultPet();
+            updateUI();
+            renderPetsAndAccessories();
+            saveGame();
+            showMessage('🧹 Прогресс сброшен', '#2c2e3a');
+        }
+    }
+
+    // ---------- 7. Функции питомцев и аксессуаров ----------
     function addPet(type) {
         let price = (type === 'cat') ? getCatPrice() : getDogPrice();
         if (score >= price) {
@@ -591,7 +717,7 @@
             showMessage(`🎉 Вы купили нового ${type === 'cat' ? 'котика' : 'пёсика'}!`, '#4caf50');
         } else {
             showMessage(`Не хватает печенек!`, '#f0ad4e');
-            playTone(440, 0.1, 0.1); // ошибка
+            playTone(440, 0.1, 0.1);
         }
     }
 
@@ -603,9 +729,7 @@
         const index = pets.findIndex(p => p.id === petId);
         if (index !== -1) {
             pets.splice(index, 1);
-            if (activePetId === petId) {
-                activePetId = pets[0]?.id || null;
-            }
+            if (activePetId === petId) activePetId = pets[0]?.id || null;
             renderPetsAndAccessories();
             saveGame();
             updateUI();
@@ -643,7 +767,7 @@
         updateUI();
         saveGame();
         playFeed();
-        startHeartRain();  // дождь при кормлении
+        startHeartRain();
         showMessage(`🍽️ ${pet.name} покормлен!`, '#4caf50');
         return true;
     }
@@ -662,7 +786,6 @@
         }
     }
 
-    // Аксессуары
     function buyAccessory(accessoryId) {
         if (!activePetId) return;
         const pet = pets.find(p => p.id === activePetId);
@@ -710,9 +833,22 @@
         return base;
     }
 
-    // --- Отрисовка всех питомцев, активной области и аксессуаров ---
+    function buyFoodForActive(price, gain) {
+        if (score >= price) {
+            if (feedActivePet(gain)) {
+                score -= price;
+                updateUI();
+                saveGame();
+            } else {
+                showMessage(`Питомец уже сыт!`, '#f0ad4e');
+            }
+        } else {
+            showMessage(`Не хватает печенек!`, '#f0ad4e');
+        }
+    }
+
+    // ---------- 8. Отрисовка питомцев и аксессуаров ----------
     function renderPetsAndAccessories() {
-        // Активный питомец
         const activePet = pets.find(p => p.id === activePetId);
         if (activePet) {
             const hungerDots = [];
@@ -738,7 +874,6 @@
             activePetArea.innerHTML = `<div>Нет питомцев. Купите первого!</div>`;
         }
 
-        // Список питомцев
         if (pets.length === 0) {
             petListContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет питомцев. Купите котика или собачку!</div>';
         } else {
@@ -780,7 +915,6 @@
             });
         }
 
-        // Аксессуары для активного питомца
         if (activePet) {
             const currentAcc = activePet.accessory;
             const accHtml = `
@@ -809,21 +943,7 @@
         }
     }
 
-    function buyFoodForActive(price, gain) {
-        if (score >= price) {
-            if (feedActivePet(gain)) {
-                score -= price;
-                updateUI();
-                saveGame();
-            } else {
-                showMessage(`Питомец уже сыт!`, '#f0ad4e');
-            }
-        } else {
-            showMessage(`Не хватает печенек!`, '#f0ad4e');
-        }
-    }
-
-    // --- Дождь из сердечек ---
+    // ---------- 9. Дождь из сердечек ----------
     let rainActive = false;
     function startHeartRain() {
         if (rainActive) return;
@@ -848,196 +968,7 @@
         }, 2500);
     }
 
-    // --- Основные игровые функции ---
-    function getBotPrice() { return BOT_BASE_PRICE + bots * 2; }
-
-    function updateUI() {
-        scoreDisplay.innerText = Math.floor(score);
-        botCountSpan.innerText = bots;
-        botPriceSpan.innerText = getBotPrice() + ' 🍪';
-        cpsSpan.innerText = bots;
-        buyBotBtn.disabled = (score < getBotPrice());
-        updatePetPricesUI();
-    }
-
-    function addScore(amount) {
-        score += amount;
-        updateUI();
-        saveGame();
-    }
-
-    function buyBot() {
-        let price = getBotPrice();
-        if (score >= price) {
-            score -= price;
-            bots++;
-            updateUI();
-            saveGame();
-            playPurchase();
-            if (navigator.vibrate) navigator.vibrate(30);
-        } else {
-            playTone(440, 0.1, 0.1);
-        }
-    }
-
-    function handleClick() {
-        addScore(1);
-        playClick();
-        clickBtn.style.transform = 'scale(0.96)';
-        setTimeout(() => { if(clickBtn) clickBtn.style.transform = ''; }, 90);
-    }
-
-    // --- Сохранение / загрузка ---
-function saveGame() {
-    // Сохраняем локально
-    const gameState = { score, bots, pets, activePetId };
-    localStorage.setItem('clickerGame', JSON.stringify(gameState));
-
-    // Сохраняем в облаке, если пользователь авторизован
-    const user = auth.currentUser;
-    if (user) {
-        saveGameProgress(user.uid);
-    }
-}
-
-    function loadGame() {
-        const saved = localStorage.getItem('clickerGame');
-        if (saved) {
-            try {
-                const state = JSON.parse(saved);
-                score = state.score ?? 0;
-                bots = state.bots ?? 0;
-                if (state.pets && state.pets.length) {
-                    pets = state.pets;
-                    activePetId = state.activePetId ?? pets[0]?.id;
-                    nextPetId = state.nextPetId ?? (Math.max(...pets.map(p=>p.id),0)+1);
-                } else {
-                    pets = [{
-                        id: nextPetId++,
-                        type: 'cat',
-                        name: 'Бобби',
-                        hunger: 3,
-                        emoji: '🐱',
-                        accessory: null
-                    }];
-                    activePetId = pets[0].id;
-                }
-            } catch(e) {}
-        } else {
-            pets = [{
-                id: nextPetId++,
-                type: 'cat',
-                name: 'Бобби',
-                hunger: 3,
-                emoji: '🐱',
-                accessory: null
-            }];
-            activePetId = pets[0].id;
-        }
-        if (isNaN(score)) score = 0;
-        if (isNaN(bots)) bots = 0;
-        if (!pets.length) {
-            pets = [{ id: nextPetId++, type: 'cat', name: 'Бобби', hunger: 3, emoji: '🐱', accessory: null }];
-            activePetId = pets[0].id;
-        }
-        if (!pets.some(p => p.id === activePetId)) activePetId = pets[0].id;
-        updateUI();
-        renderPetsAndAccessories();
-    }
-
-    function resetGame() {
-        if (confirm('Сбросить ВСЁ: печеньки, ботов, всех питомцев?')) {
-            score = 0;
-            bots = 0;
-            nextPetId = 1;
-            pets = [{
-                id: nextPetId++,
-                type: 'cat',
-                name: 'Бобби',
-                hunger: 3,
-                emoji: '🐱',
-                accessory: null
-            }];
-            activePetId = pets[0].id;
-            updateUI();
-            renderPetsAndAccessories();
-            saveGame();
-            showMessage('🧹 Прогресс сброшен', '#2c2e3a');
-        }
-    }
-
-    // --- Тема ---
-    function initTheme() {
-        const saved = localStorage.getItem('clickerTheme');
-        if (saved === 'light') {
-            document.body.classList.add('light-theme');
-        } else {
-            document.body.classList.remove('light-theme');
-        }
-    }
-    function toggleTheme() {
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        localStorage.setItem('clickerTheme', isLight ? 'light' : 'dark');
-    }
-
-<!-- Блок для входа/регистрации -->
-<div id="auth-section" style="background: var(--panel-bg); border-radius: 48px; padding: 16px; margin-bottom: 20px;">
-    <div id="login-form">
-        <h3 style="margin-top: 0;">Вход в игру</h3>
-        <input type="email" id="login-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-        <input type="password" id="login-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-        <button id="login-btn" class="buy-btn" style="width: 100%;">Войти</button>
-        <p style="text-align: center; margin-top: 10px;">Нет аккаунта? <a href="#" id="show-register" style="color: var(--accent-gold);">Зарегистрироваться</a></p>
-    </div>
-    <div id="register-form" style="display: none;">
-        <h3 style="margin-top: 0;">Регистрация</h3>
-        <input type="email" id="reg-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-        <input type="password" id="reg-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-        <button id="register-btn" class="buy-btn" style="width: 100%;">Зарегистрироваться</button>
-        <p style="text-align: center; margin-top: 10px;"><a href="#" id="show-login" style="color: var(--accent-gold);">Уже есть аккаунт? Войти</a></p>
-    </div>
-    <div id="user-info" style="display: none; text-align: center;">
-        <p>Привет, <span id="user-email"></span>!</p>
-        <button id="logout-btn" class="reset-btn" style="background: #7f8c8d; color: white;">Выйти</button>
-    </div>
-</div>
-    
-    // --- Вкладки ---
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.getElementById(`tab-${tabId}`).classList.add('active');
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
-    }
-
-    function showMessage(text, bgColor) {
-        const msg = document.createElement('div');
-        msg.innerText = text;
-        msg.style.position = 'fixed';
-        msg.style.bottom = '70px';
-        msg.style.left = '50%';
-        msg.style.transform = 'translateX(-50%)';
-        msg.style.backgroundColor = bgColor;
-        msg.style.color = 'white';
-        msg.style.padding = '6px 18px';
-        msg.style.borderRadius = '60px';
-        msg.style.fontWeight = 'bold';
-        msg.style.zIndex = '9999';
-        document.body.appendChild(msg);
-        setTimeout(() => msg.remove(), 1500);
-    }
-
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    // --- Таймеры ---
+    // ---------- 10. Таймеры ----------
     let intervalId = null;
     function startAutoTick() {
         if (intervalId) clearInterval(intervalId);
@@ -1079,146 +1010,127 @@ function saveGame() {
         setTimeout(() => el.remove(), 600);
     }
 
-    // --- Обработчики событий ---
-    clickBtn?.addEventListener('click', handleClick);
-    buyBotBtn?.addEventListener('click', buyBot);
-    resetBtn?.addEventListener('click', resetGame);
-    document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
-    addCatBtn?.addEventListener('click', () => addPet('cat'));
-    addDogBtn?.addEventListener('click', () => addPet('dog'));
+    // ---------- 11. Тема (светлая/тёмная) ----------
+    function initTheme() {
+        const saved = localStorage.getItem('clickerTheme');
+        if (saved === 'light') document.body.classList.add('light-theme');
+        else document.body.classList.remove('light-theme');
+    }
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        localStorage.setItem('clickerTheme', isLight ? 'light' : 'dark');
+    }
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-    });
+    // ---------- 12. Вкладки ----------
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+    }
 
-    // Инициализация аудио после первого клика (политика браузера)
-    document.body.addEventListener('click', () => {
-        if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        } else if (!audioCtx) {
-            initAudio();
-        }
-    }, { once: true });
-
-    // --- Запуск ---
-    loadGame();
-    startAutoTick();
-    startHungerTick();
-    setInterval(() => saveGame(), 10000);
-    initTheme();
-    initAudio(); // подготовка, но будет suspended до первого клика
-</script>
-
-<script type="module">
-    // Импортируем функции, которые мы сделали глобальными
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
-    import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
-
-    // Получаем элементы интерфейса
-    const authSection = document.getElementById('auth-section');
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
+    // ---------- 13. UI для авторизации ----------
+    const loginFormDiv = document.getElementById('login-form');
+    const registerFormDiv = document.getElementById('register-form');
     const userInfoDiv = document.getElementById('user-info');
     const userEmailSpan = document.getElementById('user-email');
 
-    // Функция для обновления интерфейса в зависимости от статуса входа
     function updateUIForUser(user) {
         if (user) {
-            loginForm.style.display = 'none';
-            registerForm.style.display = 'none';
+            loginFormDiv.style.display = 'none';
+            registerFormDiv.style.display = 'none';
             userInfoDiv.style.display = 'block';
             userEmailSpan.textContent = user.email;
             loadGameProgress(user.uid);
         } else {
-            loginForm.style.display = 'block';
-            registerForm.style.display = 'none';
+            loginFormDiv.style.display = 'block';
+            registerFormDiv.style.display = 'none';
             userInfoDiv.style.display = 'none';
         }
     }
 
-    // --- Загрузка и сохранение прогресса ---
-    async function loadGameProgress(userId) {
-        const docRef = doc(db, 'users', userId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Загружаем данные в игру
-            score = data.score || 0;
-            bots = data.bots || 0;
-            if (data.pets) pets = data.pets;
-            if (data.activePetId) activePetId = data.activePetId;
-            updateUI();
-            renderPetsAndAccessories();
-            showMessage(`Прогресс загружен! У вас ${score} печенек.`, '#4caf50');
-        } else {
-            console.log("Нет сохранений, начинаем новую игру!");
-            await saveGameProgress(userId);
-        }
-    }
-
-    async function saveGameProgress(userId) {
-        const docRef = doc(db, 'users', userId);
-        const gameState = {
-            score: score,
-            bots: bots,
-            pets: pets,
-            activePetId: activePetId,
-            lastUpdated: new Date().toISOString()
-        };
-        await setDoc(docRef, gameState, { merge: true });
-        console.log("Прогресс сохранен в облаке!");
-    }
-
-    // --- Обработчики для кнопок ---
+    // Обработчики кнопок входа/регистрации
     document.getElementById('login-btn').addEventListener('click', async () => {
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log("Успешный вход:", userCredential.user.email);
             showMessage(`Добро пожаловать, ${userCredential.user.email}!`, '#4caf50');
         } catch (error) {
-            console.error("Ошибка входа:", error);
             showMessage(`Ошибка: ${error.message}`, '#d9534f');
         }
     });
-
     document.getElementById('register-btn').addEventListener('click', async () => {
         const email = document.getElementById('reg-email').value;
         const password = document.getElementById('reg-password').value;
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            console.log("Успешная регистрация:", userCredential.user.email);
             showMessage(`Аккаунт создан для ${userCredential.user.email}!`, '#4caf50');
         } catch (error) {
-            console.error("Ошибка регистрации:", error);
             showMessage(`Ошибка: ${error.message}`, '#d9534f');
         }
     });
-
     document.getElementById('logout-btn').addEventListener('click', async () => {
         await signOut(auth);
         showMessage(`Вы вышли из аккаунта.`, '#6c757d');
     });
-
-    // --- Переключение между формами ---
     document.getElementById('show-register').addEventListener('click', (e) => {
         e.preventDefault();
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'block';
+        loginFormDiv.style.display = 'none';
+        registerFormDiv.style.display = 'block';
     });
-
     document.getElementById('show-login').addEventListener('click', (e) => {
         e.preventDefault();
-        registerForm.style.display = 'none';
-        loginForm.style.display = 'block';
+        registerFormDiv.style.display = 'none';
+        loginFormDiv.style.display = 'block';
     });
 
-    // Слушатель изменения состояния пользователя (вошел/вышел)
     onAuthStateChanged(auth, (user) => {
         updateUIForUser(user);
     });
+
+    // ---------- 14. Основные обработчики событий ----------
+    function handleClick() {
+        addScore(1);
+        playClick();
+        clickBtn.style.transform = 'scale(0.96)';
+        setTimeout(() => { if(clickBtn) clickBtn.style.transform = ''; }, 90);
+    }
+    function buyBotAction() {
+        let price = getBotPrice();
+        if (score >= price) {
+            score -= price;
+            bots++;
+            updateUI();
+            saveGame();
+            playPurchase();
+            if (navigator.vibrate) navigator.vibrate(30);
+        } else {
+            playTone(440, 0.1, 0.1);
+        }
+    }
+
+    clickBtn?.addEventListener('click', handleClick);
+    buyBotBtn?.addEventListener('click', buyBotAction);
+    resetBtn?.addEventListener('click', resetGame);
+    document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+    addCatBtn?.addEventListener('click', () => addPet('cat'));
+    addDogBtn?.addEventListener('click', () => addPet('dog'));
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // ---------- 15. Старт игры ----------
+    loadGame();
+    startAutoTick();
+    startHungerTick();
+    setInterval(() => saveGame(), 10000);
+    initTheme();
+    document.body.addEventListener('click', () => {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        else if (!audioCtx) initAudio();
+    }, { once: true });
 </script>
-    
 </body>
 </html>
