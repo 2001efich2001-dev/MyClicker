@@ -1,6 +1,41 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <!-- Добавляем Firebase SDK -->
+<script type="module">
+    // Импортируем функции Firebase, которые мы будем использовать
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
+    import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
+
+    // Конфигурация Firebase (скопируйте сюда ваш объект из консоли Firebase)
+    const firebaseConfig = {
+       apiKey: "AIzaSyD4eYeInogumVcDp8SyuSRXgWq7rbzIoL4",
+    authDomain: "clicker-28573.firebaseapp.com",
+    projectId: "clicker-28573",
+    storageBucket: "clicker-28573.firebasestorage.app",
+    messagingSenderId: "1002257664870",
+    appId: "1:1002257664870:web:c05436dc9dd6d12a34d6a7",
+    measurementId: "G-SQWP6D1TH8"
+    };
+
+    // Инициализация Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Сделаем объекты auth и db глобальными, чтобы они были доступны из других скриптов
+    window.auth = auth;
+    window.db = db;
+    // Делаем функции аутентификации глобальными
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.signOut = signOut;
+    window.onAuthStateChanged = onAuthStateChanged;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
+    window.doc = doc;
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Кликер · Питомцы с аксессуарами</title>
@@ -853,15 +888,17 @@
     }
 
     // --- Сохранение / загрузка ---
-    function saveGame() {
-        const gameState = {
-            score, bots,
-            pets: pets.map(p => ({ ...p })),
-            activePetId,
-            nextPetId
-        };
-        localStorage.setItem('clickerGame', JSON.stringify(gameState));
+function saveGame() {
+    // Сохраняем локально
+    const gameState = { score, bots, pets, activePetId };
+    localStorage.setItem('clickerGame', JSON.stringify(gameState));
+
+    // Сохраняем в облаке, если пользователь авторизован
+    const user = auth.currentUser;
+    if (user) {
+        saveGameProgress(user.uid);
     }
+}
 
     function loadGame() {
         const saved = localStorage.getItem('clickerGame');
@@ -944,6 +981,28 @@
         localStorage.setItem('clickerTheme', isLight ? 'light' : 'dark');
     }
 
+<!-- Блок для входа/регистрации -->
+<div id="auth-section" style="background: var(--panel-bg); border-radius: 48px; padding: 16px; margin-bottom: 20px;">
+    <div id="login-form">
+        <h3 style="margin-top: 0;">Вход в игру</h3>
+        <input type="email" id="login-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <input type="password" id="login-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <button id="login-btn" class="buy-btn" style="width: 100%;">Войти</button>
+        <p style="text-align: center; margin-top: 10px;">Нет аккаунта? <a href="#" id="show-register" style="color: var(--accent-gold);">Зарегистрироваться</a></p>
+    </div>
+    <div id="register-form" style="display: none;">
+        <h3 style="margin-top: 0;">Регистрация</h3>
+        <input type="email" id="reg-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <input type="password" id="reg-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
+        <button id="register-btn" class="buy-btn" style="width: 100%;">Зарегистрироваться</button>
+        <p style="text-align: center; margin-top: 10px;"><a href="#" id="show-login" style="color: var(--accent-gold);">Уже есть аккаунт? Войти</a></p>
+    </div>
+    <div id="user-info" style="display: none; text-align: center;">
+        <p>Привет, <span id="user-email"></span>!</p>
+        <button id="logout-btn" class="reset-btn" style="background: #7f8c8d; color: white;">Выйти</button>
+    </div>
+</div>
+    
     // --- Вкладки ---
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -1049,5 +1108,117 @@
     initTheme();
     initAudio(); // подготовка, но будет suspended до первого клика
 </script>
+
+<script type="module">
+    // Импортируем функции, которые мы сделали глобальными
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
+    import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
+
+    // Получаем элементы интерфейса
+    const authSection = document.getElementById('auth-section');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const userInfoDiv = document.getElementById('user-info');
+    const userEmailSpan = document.getElementById('user-email');
+
+    // Функция для обновления интерфейса в зависимости от статуса входа
+    function updateUIForUser(user) {
+        if (user) {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'none';
+            userInfoDiv.style.display = 'block';
+            userEmailSpan.textContent = user.email;
+            loadGameProgress(user.uid);
+        } else {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            userInfoDiv.style.display = 'none';
+        }
+    }
+
+    // --- Загрузка и сохранение прогресса ---
+    async function loadGameProgress(userId) {
+        const docRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Загружаем данные в игру
+            score = data.score || 0;
+            bots = data.bots || 0;
+            if (data.pets) pets = data.pets;
+            if (data.activePetId) activePetId = data.activePetId;
+            updateUI();
+            renderPetsAndAccessories();
+            showMessage(`Прогресс загружен! У вас ${score} печенек.`, '#4caf50');
+        } else {
+            console.log("Нет сохранений, начинаем новую игру!");
+            await saveGameProgress(userId);
+        }
+    }
+
+    async function saveGameProgress(userId) {
+        const docRef = doc(db, 'users', userId);
+        const gameState = {
+            score: score,
+            bots: bots,
+            pets: pets,
+            activePetId: activePetId,
+            lastUpdated: new Date().toISOString()
+        };
+        await setDoc(docRef, gameState, { merge: true });
+        console.log("Прогресс сохранен в облаке!");
+    }
+
+    // --- Обработчики для кнопок ---
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            console.log("Успешный вход:", userCredential.user.email);
+            showMessage(`Добро пожаловать, ${userCredential.user.email}!`, '#4caf50');
+        } catch (error) {
+            console.error("Ошибка входа:", error);
+            showMessage(`Ошибка: ${error.message}`, '#d9534f');
+        }
+    });
+
+    document.getElementById('register-btn').addEventListener('click', async () => {
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            console.log("Успешная регистрация:", userCredential.user.email);
+            showMessage(`Аккаунт создан для ${userCredential.user.email}!`, '#4caf50');
+        } catch (error) {
+            console.error("Ошибка регистрации:", error);
+            showMessage(`Ошибка: ${error.message}`, '#d9534f');
+        }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await signOut(auth);
+        showMessage(`Вы вышли из аккаунта.`, '#6c757d');
+    });
+
+    // --- Переключение между формами ---
+    document.getElementById('show-register').addEventListener('click', (e) => {
+        e.preventDefault();
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+    });
+
+    document.getElementById('show-login').addEventListener('click', (e) => {
+        e.preventDefault();
+        registerForm.style.display = 'none';
+        loginForm.style.display = 'block';
+    });
+
+    // Слушатель изменения состояния пользователя (вошел/вышел)
+    onAuthStateChanged(auth, (user) => {
+        updateUIForUser(user);
+    });
+</script>
+    
 </body>
 </html>
