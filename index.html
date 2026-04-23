@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" href="favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Кликер - питомец!</title>
+    <title>Кликер · Питомцы · Облачное сохранение · Топ игроков</title>
     <style>
         /* ========== СТИЛИ ========== */
         * {
@@ -72,7 +69,6 @@
             color: var(--text-primary);
             flex-direction: column;
         }
-        /* Контейнер игры (изначально скрыт) */
         .game-container {
             background: var(--container-bg);
             backdrop-filter: blur(4px);
@@ -84,7 +80,6 @@
             position: relative;
             display: none;
         }
-        /* Блок авторизации (показывается, если не залогинен) */
         .auth-container {
             background: var(--container-bg);
             backdrop-filter: blur(4px);
@@ -125,19 +120,6 @@
             margin-top: 10px;
             font-size: 0.85rem;
         }
-        /* Футер */
-        .global-footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            opacity: 0.7;
-        }
-        .global-footer p {
-            margin: 4px 0;
-        }
-
-        /* Остальные стили (вкладки, кнопки и т.д.) без изменений */
         .tabs {
             display: flex;
             flex-wrap: wrap;
@@ -397,36 +379,36 @@
             margin: 20px 0;
             text-align: center;
         }
-       .players-list {
-    max-height: 400px;
-    overflow-y: auto;
-    background: var(--stat-bg);
-    border-radius: 48px;
-    padding: 16px;
-}
-.player-item {
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--card-border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.player-info {
-    display: flex;
-    flex-direction: column;
-}
-.player-nick {
-    color: var(--accent-gold);
-    font-size: 1rem;
-    font-weight: bold;
-}
-.player-score {
-    font-weight: bold;
-    background: var(--card-bg);
-    padding: 4px 10px;
-    border-radius: 40px;
-    font-size: 0.9rem;
-}
+        .players-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: var(--stat-bg);
+            border-radius: 48px;
+            padding: 16px;
+        }
+        .player-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .player-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .player-nick {
+            color: var(--accent-gold);
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .player-score {
+            font-weight: bold;
+            background: var(--card-bg);
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
         .global-footer {
             text-align: center;
             margin-top: 30px;
@@ -436,16 +418,6 @@
         }
         .global-footer p {
             margin: 4px 0;
-        }
-        @media (max-width: 480px) {
-            .click-btn { width: 140px; height: 140px; }
-            .click-emoji { font-size: 2rem; }
-            .score-value { font-size: 2.8rem; }
-            .hunger-dot { width: 22px; height: 22px; }
-            .active-pet-emoji { font-size: 1.8rem; }
-            .tab-btn { font-size: 0.7rem; padding: 6px 0; }
-            .player-item { flex-direction: column; align-items: flex-start; gap: 5px; }
-            .player-score { align-self: flex-end; }
         }
         .heart-rain {
             position: fixed;
@@ -467,11 +439,21 @@
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
+        @media (max-width: 480px) {
+            .click-btn { width: 140px; height: 140px; }
+            .click-emoji { font-size: 2rem; }
+            .score-value { font-size: 2.8rem; }
+            .hunger-dot { width: 22px; height: 22px; }
+            .active-pet-emoji { font-size: 1.8rem; }
+            .tab-btn { font-size: 0.7rem; padding: 6px 0; }
+            .player-item { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .player-score { align-self: flex-end; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Блок авторизации (виден по умолчанию) -->
+    <!-- Блок авторизации -->
     <div id="authContainer" class="auth-container">
         <h2>🐱 Добро пожаловать!</h2>
         <div id="loginForm">
@@ -491,7 +473,7 @@
         </div>
     </div>
 
-    <!-- Игровой контейнер (изначально скрыт) -->
+    <!-- Игровой контейнер -->
     <div id="gameContainer" class="game-container">
         <div class="tabs">
             <button class="tab-btn active" data-tab="clicker">🍪 Кликер</button>
@@ -529,7 +511,7 @@
             </div>
         </div>
 
-        <!-- Вкладка Питомцы (аналогично) -->
+        <!-- Вкладка Питомцы -->
         <div id="tab-pet" class="tab-content">
             <div class="pet-section">
                 <div class="active-pet-area" id="activePetArea"></div>
@@ -562,7 +544,7 @@
             </div>
         </div>
 
-        <!-- Вкладка Игроки (топ по очкам) -->
+        <!-- Вкладка Игроки (топ по очкам, без email) -->
         <div id="tab-players" class="tab-content">
             <div class="players-list" id="playersList">Загрузка...</div>
         </div>
@@ -579,10 +561,10 @@
         </div>
     </div>
 
-    <!-- Футер с подписью -->
+    <!-- Футер -->
     <div class="global-footer">
         <p>developed by Efich</p>
-        <p>Alfa V 0.0.9</p>
+        <p>Alfa V 0.0.10</p>
     </div>
 
     <script type="module">
@@ -643,6 +625,15 @@
         const playersListDiv = document.getElementById('playersList');
         const themeToggle = document.getElementById('themeToggle');
 
+        // ========== Функция форматирования чисел ==========
+        function formatNumber(num) {
+            if (num < 1000) return Math.floor(num).toString();
+            if (num < 1000000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            if (num < 1000000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (num < 1000000000000) return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+            return (num / 1000000000000).toFixed(1).replace(/\.0$/, '') + 'T';
+        }
+
         // ========== Звуки ==========
         let audioCtx = null;
         function initAudio() {
@@ -702,8 +693,8 @@
         function getCatPrice() { return catBasePrice + pets.length * 5; }
         function getDogPrice() { return dogBasePrice + pets.length * 5; }
         function updatePetPricesUI() {
-            catPriceSpan.innerText = getCatPrice();
-            dogPriceSpan.innerText = getDogPrice();
+            catPriceSpan.innerText = formatNumber(getCatPrice());
+            dogPriceSpan.innerText = formatNumber(getDogPrice());
         }
 
         // ========== Облачное сохранение и загрузка ==========
@@ -739,7 +730,7 @@
                 }
                 updateUI();
                 renderPetsAndAccessories();
-                showMessage(`Облачный прогресс загружен! У вас ${Math.floor(score)} печенек.`, '#4caf50');
+                showMessage(`Облачный прогресс загружен! У вас ${formatNumber(score)} печенек.`, '#4caf50');
             } else {
                 initDefaultPet();
                 score = 0;
@@ -772,9 +763,9 @@
         // ========== Основные игровые функции ==========
         function getBotPrice() { return BOT_BASE_PRICE + bots * 2; }
         function updateUI() {
-            scoreDisplay.innerText = Math.floor(score);
+            scoreDisplay.innerText = formatNumber(score);
             botCountSpan.innerText = bots;
-            botPriceSpan.innerText = getBotPrice() + ' 🍪';
+            botPriceSpan.innerText = formatNumber(getBotPrice()) + ' 🍪';
             cpsSpan.innerText = bots;
             buyBotBtn.disabled = (score < getBotPrice());
             updatePetPricesUI();
@@ -797,7 +788,7 @@
             }
         }
 
-        // ========== Питомцы и аксессуары (без изменений) ==========
+        // ========== Питомцы и аксессуары ==========
         function addPet(type) {
             let price = (type === 'cat') ? getCatPrice() : getDogPrice();
             if (score >= price) {
@@ -1013,7 +1004,7 @@
                         ${accessoriesList.map(acc => `
                             <div class="accessory-item">
                                 <span>${acc.emoji} ${acc.name}</span>
-                                <button class="accessory-btn" data-acc="${acc.id}" ${currentAcc === acc.id ? 'disabled style="opacity:0.6;"' : ''}>${currentAcc === acc.id ? 'Надето' : acc.price+'🍪'}</button>
+                                <button class="accessory-btn" data-acc="${acc.id}" ${currentAcc === acc.id ? 'disabled style="opacity:0.6;"' : ''}>${currentAcc === acc.id ? 'Надето' : formatNumber(acc.price)+'🍪'}</button>
                             </div>
                         `).join('')}
                     </div>
@@ -1077,7 +1068,7 @@
         function showFloatingNumber(amount) {
             if (!amount) return;
             const el = document.createElement('div');
-            el.innerText = `+${amount}`;
+            el.innerText = `+${formatNumber(amount)}`;
             el.style.position = 'fixed';
             el.style.left = '50%';
             el.style.top = '40%';
@@ -1119,40 +1110,40 @@
             if (tabId === 'players') loadPlayersList();
         }
 
-        // ========== Список игроков (ТОП по очкам) ==========
-       async function loadPlayersList() {
-    if (!playersListDiv) return;
-    playersListDiv.innerHTML = 'Загрузка...';
-    try {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, orderBy('score', 'desc'));
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-            playersListDiv.innerHTML = 'Пока нет зарегистрированных игроков';
-            return;
+        // ========== Список игроков (ТОП по очкам, без email) ==========
+        async function loadPlayersList() {
+            if (!playersListDiv) return;
+            playersListDiv.innerHTML = 'Загрузка...';
+            try {
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, orderBy('score', 'desc'));
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.empty) {
+                    playersListDiv.innerHTML = 'Пока нет зарегистрированных игроков';
+                    return;
+                }
+                let html = '';
+                let rank = 1;
+                for (const docSnap of querySnapshot.docs) {
+                    const data = docSnap.data();
+                    const nick = data.displayName || 'Аноним';
+                    const playerScore = data.score ?? 0;
+                    html += `
+                        <div class="player-item">
+                            <div class="player-info">
+                                <span class="player-nick">${rank}. ${escapeHtml(nick)}</span>
+                            </div>
+                            <div class="player-score">🍪 ${formatNumber(playerScore)}</div>
+                        </div>
+                    `;
+                    rank++;
+                }
+                playersListDiv.innerHTML = html;
+            } catch (error) {
+                console.error(error);
+                playersListDiv.innerHTML = 'Ошибка загрузки списка';
+            }
         }
-        let html = '';
-        let rank = 1;
-        for (const docSnap of querySnapshot.docs) {
-            const data = docSnap.data();
-            const nick = data.displayName || 'Аноним';
-            const playerScore = data.score ?? 0;
-            html += `
-                <div class="player-item">
-                    <div class="player-info">
-                        <span class="player-nick">${rank}. ${escapeHtml(nick)}</span>
-                    </div>
-                    <div class="player-score">🍪 ${Math.floor(playerScore)}</div>
-                </div>
-            `;
-            rank++;
-        }
-        playersListDiv.innerHTML = html;
-    } catch (error) {
-        console.error(error);
-        playersListDiv.innerHTML = 'Ошибка загрузки списка';
-    }
-}
 
         // ========== Управление ником ==========
         async function updateUserDisplayName(userId, newNick) {
@@ -1174,7 +1165,7 @@
             await setDoc(userDocRef, { displayName: nick, userEmail: email }, { merge: true });
         }
 
-        // ========== Авторизация: переключение форм ==========
+        // ========== Авторизация ==========
         const authContainer = document.getElementById('authContainer');
         const gameContainer = document.getElementById('gameContainer');
         const loginFormDiv = document.getElementById('loginForm');
