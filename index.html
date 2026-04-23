@@ -394,39 +394,36 @@
             margin: 20px 0;
             text-align: center;
         }
-        .players-list {
-            max-height: 400px;
-            overflow-y: auto;
-            background: var(--stat-bg);
-            border-radius: 48px;
-            padding: 16px;
-        }
-        .player-item {
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--card-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .player-info {
-            display: flex;
-            flex-direction: column;
-        }
-        .player-email {
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        .player-nick {
-            color: var(--accent-gold);
-            font-size: 0.8rem;
-        }
-        .player-score {
-            font-weight: bold;
-            background: var(--card-bg);
-            padding: 4px 10px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-        }
+       .players-list {
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--stat-bg);
+    border-radius: 48px;
+    padding: 16px;
+}
+.player-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.player-info {
+    display: flex;
+    flex-direction: column;
+}
+.player-nick {
+    color: var(--accent-gold);
+    font-size: 1rem;
+    font-weight: bold;
+}
+.player-score {
+    font-weight: bold;
+    background: var(--card-bg);
+    padding: 4px 10px;
+    border-radius: 40px;
+    font-size: 0.9rem;
+}
         .global-footer {
             text-align: center;
             margin-top: 30px;
@@ -582,7 +579,7 @@
     <!-- Футер с подписью -->
     <div class="global-footer">
         <p>developed by Efich</p>
-        <p>Alfa V 0.0.5</p>
+        <p>Alfa V 0.0.7</p>
     </div>
 
     <script type="module">
@@ -1120,42 +1117,39 @@
         }
 
         // ========== Список игроков (ТОП по очкам) ==========
-        async function loadPlayersList() {
-            if (!playersListDiv) return;
-            playersListDiv.innerHTML = 'Загрузка...';
-            try {
-                const usersRef = collection(db, 'users');
-                // Сортируем по полю score в порядке убывания (больше очков — выше)
-                const q = query(usersRef, orderBy('score', 'desc'));
-                const querySnapshot = await getDocs(q);
-                if (querySnapshot.empty) {
-                    playersListDiv.innerHTML = 'Пока нет зарегистрированных игроков';
-                    return;
-                }
-                let html = '';
-                let rank = 1;
-                for (const docSnap of querySnapshot.docs) {
-                    const data = docSnap.data();
-                    const email = data.userEmail || 'email не указан';
-                    const nick = data.displayName || 'Без ника';
-                    const playerScore = data.score ?? 0;
-                    html += `
-                        <div class="player-item">
-                            <div class="player-info">
-                          
-                                <span class="player-nick">${escapeHtml(nick)}</span>
-                            </div>
-                            <div class="player-score">🍪 ${Math.floor(playerScore)}</div>
-                        </div>
-                    `;
-                    rank++;
-                }
-                playersListDiv.innerHTML = html;
-            } catch (error) {
-                console.error(error);
-                playersListDiv.innerHTML = 'Ошибка загрузки списка';
-            }
+       async function loadPlayersList() {
+    if (!playersListDiv) return;
+    playersListDiv.innerHTML = 'Загрузка...';
+    try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, orderBy('score', 'desc'));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            playersListDiv.innerHTML = 'Пока нет зарегистрированных игроков';
+            return;
         }
+        let html = '';
+        let rank = 1;
+        for (const docSnap of querySnapshot.docs) {
+            const data = docSnap.data();
+            const nick = data.displayName || 'Аноним';
+            const playerScore = data.score ?? 0;
+            html += `
+                <div class="player-item">
+                    <div class="player-info">
+                        <span class="player-nick">${rank}. ${escapeHtml(nick)}</span>
+                    </div>
+                    <div class="player-score">🍪 ${Math.floor(playerScore)}</div>
+                </div>
+            `;
+            rank++;
+        }
+        playersListDiv.innerHTML = html;
+    } catch (error) {
+        console.error(error);
+        playersListDiv.innerHTML = 'Ошибка загрузки списка';
+    }
+}
 
         // ========== Управление ником ==========
         async function updateUserDisplayName(userId, newNick) {
