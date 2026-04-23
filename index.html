@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Кликер · Питомцы · Облачное сохранение · Топ игроков</title>
+    <title>Кликер · Питомцы · Облачное сохранение · Оптимизированное сохранение</title>
     <style>
-        /* ========== СТИЛИ ========== */
+        /* ========== СТИЛИ (без изменений, полностью из предыдущей версии) ========== */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -544,7 +544,7 @@
             </div>
         </div>
 
-        <!-- Вкладка Игроки (топ по очкам, без email) -->
+        <!-- Вкладка Игроки -->
         <div id="tab-players" class="tab-content">
             <div class="players-list" id="playersList">Загрузка...</div>
         </div>
@@ -557,14 +557,14 @@
             <div class="settings-item">
                 <button id="themeToggle" class="reset-btn" style="background: var(--buy-btn-bg); color: white;">🌓 Переключить тему</button>
             </div>
-            <footer>Прогресс сохраняется только в облаке</footer>
+            <footer>Прогресс сохраняется в облаке раз в минуту и при действиях</footer>
         </div>
     </div>
 
     <!-- Футер -->
     <div class="global-footer">
         <p>developed by Efich</p>
-        <p>Alfa V 0.0.11</p>
+        <p>Alfa V 0.0.11 - оптимизированное сохранение</p>
     </div>
 
     <script type="module">
@@ -601,6 +601,9 @@
             { id: 'bow', name: 'Бантик', emoji: '🎀', price: 40 },
             { id: 'crown', name: 'Корона', emoji: '👑', price: 100 }
         ];
+
+        // Флаг для отслеживания необходимости сохранения (для периодического)
+        let pendingSave = false;
 
         // DOM элементы игры
         const scoreDisplay = document.getElementById('scoreDisplay');
@@ -711,6 +714,7 @@
             };
             await setDoc(docRef, gameState, { merge: true });
             console.log("Прогресс сохранён в облаке");
+            pendingSave = false;
         }
 
         async function loadGameProgress(userId) {
@@ -742,10 +746,39 @@
             }
         }
 
-        async function saveGame() {
+        // Функция немедленного сохранения (при действиях игрока)
+        async function saveGameImmediate() {
             if (auth.currentUser) {
                 await saveGameProgress(auth.currentUser.uid);
             }
+        }
+
+        // Функция для локального изменения счета без немедленного сохранения (для автотика)
+        function addScoreLocal(amount) {
+            score += amount;
+            updateUI();
+            pendingSave = true;
+        }
+
+        // Функция для действий, которые должны сохраняться сразу (клик, покупка, кормление и т.д.)
+        async function addScoreAndSave(amount) {
+            score += amount;
+            updateUI();
+            if (auth.currentUser) {
+                await saveGameProgress(auth.currentUser.uid);
+            }
+        }
+
+        // Периодическое сохранение (раз в минуту)
+        let periodicSaveInterval = null;
+        function startPeriodicSave() {
+            if (periodicSaveInterval) clearInterval(periodicSaveInterval);
+            periodicSaveInterval = setInterval(async () => {
+                if (pendingSave && auth.currentUser) {
+                    await saveGameProgress(auth.currentUser.uid);
+                    console.log("Периодическое сохранение выполнено");
+                }
+            }, 60000); // 60 секунд
         }
 
         function initDefaultPet() {
@@ -770,12 +803,8 @@
             buyBotBtn.disabled = (score < getBotPrice());
             updatePetPricesUI();
         }
-        function addScore(amount) {
-            score += amount;
-            updateUI();
-            saveGame();
-        }
-        function resetGame() {
+        
+        async function resetGame() {
             if (confirm('Сбросить ВСЁ: печеньки, ботов, всех питомцев? Это действие необратимо.')) {
                 score = 0;
                 bots = 0;
@@ -783,13 +812,13 @@
                 initDefaultPet();
                 updateUI();
                 renderPetsAndAccessories();
-                saveGame();
+                await saveGameImmediate();
                 showMessage('🧹 Прогресс сброшен', '#2c2e3a');
             }
         }
 
-        // ========== Питомцы и аксессуары ==========
-        function addPet(type) {
+        // ========== Питомцы и аксессуары (с немедленным сохранением) ==========
+        async function addPet(type) {
             let price = (type === 'cat') ? getCatPrice() : getDogPrice();
             if (score >= price) {
                 score -= price;
@@ -803,7 +832,7 @@
                 };
                 pets.push(newPet);
                 if (activePetId === null) activePetId = newPet.id;
-                saveGame();
+                await saveGameImmediate();
                 updateUI();
                 renderPetsAndAccessories();
                 playPurchase();
@@ -813,7 +842,7 @@
                 playTone(440, 0.1, 0.1);
             }
         }
-        function deletePet(petId) {
+        async function deletePet(petId) {
             if (pets.length === 1) {
                 showMessage(`Нельзя удалить последнего питомца!`, '#d9534f');
                 return;
@@ -823,7 +852,7 @@
                 pets.splice(index, 1);
                 if (activePetId === petId) activePetId = pets[0]?.id || null;
                 renderPetsAndAccessories();
-                saveGame();
+                await saveGameImmediate();
                 updateUI();
                 showMessage(`Питомец удалён`, '#6c757d');
             }
@@ -832,20 +861,20 @@
             activePetId = petId;
             renderPetsAndAccessories();
             updateUI();
-            saveGame();
+            saveGameImmediate(); // не ждём
         }
-        function editPetName(petId) {
+        async function editPetName(petId) {
             const pet = pets.find(p => p.id === petId);
             if (!pet) return;
             let newName = prompt('Введите новое имя питомца:', pet.name);
             if (newName && newName.trim() !== '') {
                 pet.name = newName.trim().substring(0, 20);
                 renderPetsAndAccessories();
-                saveGame();
+                await saveGameImmediate();
                 showMessage(`Имя изменено на ${pet.name}`, '#4caf50');
             }
         }
-        function feedActivePet(amount) {
+        async function feedActivePet(amount) {
             if (!activePetId) return false;
             const pet = pets.find(p => p.id === activePetId);
             if (!pet) return false;
@@ -854,7 +883,7 @@
             pet.hunger = newHunger;
             renderPetsAndAccessories();
             updateUI();
-            saveGame();
+            await saveGameImmediate();
             playFeed();
             startHeartRain();
             showMessage(`🍽️ ${pet.name} покормлен!`, '#4caf50');
@@ -867,13 +896,13 @@
                 pet.hunger--;
                 renderPetsAndAccessories();
                 updateUI();
-                saveGame();
+                saveGameImmediate(); // не ждём
                 if (pet.hunger === 0) {
                     showMessage(`😿 ${pet.name} голоден! Покормите питомца.`, '#d9534f');
                 }
             }
         }
-        function buyAccessory(accessoryId) {
+        async function buyAccessory(accessoryId) {
             if (!activePetId) return;
             const pet = pets.find(p => p.id === activePetId);
             if (!pet) return;
@@ -888,21 +917,21 @@
                 pet.accessory = accessoryId;
                 renderPetsAndAccessories();
                 updateUI();
-                saveGame();
+                await saveGameImmediate();
                 playAccessory();
                 showMessage(`🎀 ${pet.name} теперь носит ${accessory.name}!`, '#4caf50');
             } else {
                 showMessage(`Не хватает печенек для ${accessory.name}`, '#f0ad4e');
             }
         }
-        function removeAccessory() {
+        async function removeAccessory() {
             if (!activePetId) return;
             const pet = pets.find(p => p.id === activePetId);
             if (!pet) return;
             if (pet.accessory) {
                 pet.accessory = null;
                 renderPetsAndAccessories();
-                saveGame();
+                await saveGameImmediate();
                 playAccessory();
                 showMessage(`Аксессуар снят с ${pet.name}`, '#6c757d');
             } else {
@@ -917,12 +946,12 @@
             }
             return base;
         }
-        function buyFoodForActive(price, gain) {
+        async function buyFoodForActive(price, gain) {
             if (score >= price) {
-                if (feedActivePet(gain)) {
+                if (await feedActivePet(gain)) {
                     score -= price;
                     updateUI();
-                    saveGame();
+                    await saveGameImmediate();
                 } else {
                     showMessage(`Питомец уже сыт!`, '#f0ad4e');
                 }
@@ -1055,7 +1084,7 @@
             if (intervalId) clearInterval(intervalId);
             intervalId = setInterval(() => {
                 if (bots > 0) {
-                    addScore(bots);
+                    addScoreLocal(bots);
                     showFloatingNumber(bots);
                 }
             }, 1000);
@@ -1063,7 +1092,7 @@
         let hungerInterval = null;
         function startHungerTick() {
             if (hungerInterval) clearInterval(hungerInterval);
-            hungerInterval = setInterval(() => decreaseHungerForActive(), 100000);
+            hungerInterval = setInterval(() => decreaseHungerForActive(), 10000);
         }
         function showFloatingNumber(amount) {
             if (!amount) return;
@@ -1110,7 +1139,7 @@
             if (tabId === 'players') loadPlayersList();
         }
 
-        // ========== Список игроков (ТОП по очкам, без email) ==========
+        // ========== Список игроков (ТОП по очкам) ==========
         async function loadPlayersList() {
             if (!playersListDiv) return;
             playersListDiv.innerHTML = 'Загрузка...';
@@ -1251,12 +1280,15 @@
                 await loadGameProgress(user.uid);
                 if (!intervalId) startAutoTick();
                 if (!hungerInterval) startHungerTick();
+                if (!periodicSaveInterval) startPeriodicSave();
                 if (document.getElementById('tab-players').classList.contains('active')) loadPlayersList();
             } else {
                 if (intervalId) clearInterval(intervalId);
                 if (hungerInterval) clearInterval(hungerInterval);
+                if (periodicSaveInterval) clearInterval(periodicSaveInterval);
                 intervalId = null;
                 hungerInterval = null;
+                periodicSaveInterval = null;
                 gameContainer.style.display = 'none';
                 authContainer.style.display = 'block';
                 loginFormDiv.style.display = 'block';
@@ -1272,19 +1304,19 @@
         });
 
         // ========== Обработчики игровых кнопок ==========
-        function handleClick() {
-            addScore(1);
+        async function handleClick() {
+            await addScoreAndSave(1);
             playClick();
             clickBtn.style.transform = 'scale(0.96)';
             setTimeout(() => { if(clickBtn) clickBtn.style.transform = ''; }, 90);
         }
-        function buyBotAction() {
+        async function buyBotAction() {
             let price = getBotPrice();
             if (score >= price) {
                 score -= price;
                 bots++;
                 updateUI();
-                saveGame();
+                await saveGameImmediate();
                 playPurchase();
                 if (navigator.vibrate) navigator.vibrate(30);
             } else {
