@@ -564,7 +564,7 @@
     <!-- Футер -->
     <div class="global-footer">
         <p>developed by Efich</p>
-        <p>Alfa V 0.0.10</p>
+        <p>Alfa V 0.0.11</p>
     </div>
 
     <script type="module">
@@ -1063,7 +1063,7 @@
         let hungerInterval = null;
         function startHungerTick() {
             if (hungerInterval) clearInterval(hungerInterval);
-            hungerInterval = setInterval(() => decreaseHungerForActive(), 10000);
+            hungerInterval = setInterval(() => decreaseHungerForActive(), 100000);
         }
         function showFloatingNumber(amount) {
             if (!amount) return;
