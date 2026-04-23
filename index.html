@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Кликер · Питомцы · Облачное сохранение · Игроки</title>
+    <title>Кликер · Облачное сохранение · Только авторизация</title>
     <style>
-        /* ========== СТИЛИ (без изменений, добавлены новые вкладки) ========== */
+        /* ========== СТИЛИ (без изменений, но добавлен оверлей) ========== */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -68,6 +68,7 @@
             padding: 20px;
             color: var(--text-primary);
         }
+        /* Контейнер игры (изначально скрыт) */
         .game-container {
             background: var(--container-bg);
             backdrop-filter: blur(4px);
@@ -77,7 +78,51 @@
             width: 100%;
             max-width: 650px;
             position: relative;
+            display: none;
         }
+        /* Блок авторизации (показывается, если не залогинен) */
+        .auth-container {
+            background: var(--container-bg);
+            backdrop-filter: blur(4px);
+            border-radius: 64px;
+            padding: 30px 25px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
+        }
+        .auth-container h2 {
+            margin-top: 0;
+            color: var(--accent-gold);
+        }
+        .auth-container input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 40px;
+            border: 1px solid var(--card-border);
+            background: var(--stat-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .auth-container button {
+            width: 100%;
+            margin-top: 12px;
+        }
+        .switch-link {
+            color: var(--accent-gold);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 15px;
+            display: inline-block;
+        }
+        .error-msg {
+            color: #ff8888;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        /* Остальные стили (вкладки, кнопки и т.д.) без изменений */
         .tabs {
             display: flex;
             flex-wrap: wrap;
@@ -393,852 +438,850 @@
     </style>
 </head>
 <body>
-<div class="game-container">
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="clicker">🍪 Кликер</button>
-        <button class="tab-btn" data-tab="pet">🐱 Питомцы</button>
-        <button class="tab-btn" data-tab="profile">👤 Профиль</button>
-        <button class="tab-btn" data-tab="players">🏆 Игроки</button>
-        <button class="tab-btn" data-tab="settings">⚙️ Настройки</button>
-    </div>
 
-    <!-- Вкладка Кликер -->
-    <div id="tab-clicker" class="tab-content active">
-        <div class="score-panel">
-            <div class="score-label">🍪 ПЕЧЕНЕК (очки)</div>
-            <div class="score-value" id="scoreDisplay">0</div>
+    <!-- Блок авторизации (виден по умолчанию) -->
+    <div id="authContainer" class="auth-container">
+        <h2>🐱 Добро пожаловать!</h2>
+        <div id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
+            <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password">
+            <button id="loginBtn" class="buy-btn">Войти</button>
+            <div class="switch-link" id="showRegisterLink">Нет аккаунта? Зарегистрироваться</div>
+            <div id="authError" class="error-msg"></div>
         </div>
-        <div class="click-area">
-            <button class="click-btn" id="clickButton">
-                <span class="click-emoji">🐱</span>
-                <span>Клик!</span>
-            </button>
-        </div>
-        <div class="upgrade-card">
-            <div>
-                <div class="upgrade-name">🤖 Авто-кликер (бот)</div>
-                <div class="upgrade-desc">+1 печенька/сек за каждого</div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="upgrade-price" id="botPrice">10 🍪</div>
-                <button class="buy-btn" id="buyBotBtn">Купить</button>
-            </div>
-        </div>
-        <div class="stats">
-            <span>🤖 Ботов: <strong id="botCount">0</strong></span>
-            <span>⚡ Клик/сек: <strong id="cps">0</strong></span>
+        <div id="registerForm" style="display: none;">
+            <input type="text" id="regNick" placeholder="Ваш игровой ник" autocomplete="off">
+            <input type="email" id="regEmail" placeholder="Email" autocomplete="email">
+            <input type="password" id="regPassword" placeholder="Пароль" autocomplete="new-password">
+            <button id="registerBtn" class="buy-btn">Зарегистрироваться</button>
+            <div class="switch-link" id="showLoginLink">Уже есть аккаунт? Войти</div>
+            <div id="regError" class="error-msg"></div>
         </div>
     </div>
 
-    <!-- Вкладка Питомцы -->
-    <div id="tab-pet" class="tab-content">
-        <div class="pet-section">
-            <div class="active-pet-area" id="activePetArea"></div>
-            <div style="font-weight: bold; margin: 8px 0;">🐾 Мои питомцы</div>
-            <div id="petListContainer" class="pet-list"></div>
-            <div class="add-pet-area">
-                <button id="addCatBtn" class="add-pet-btn">➕ Купить котика (цена: <span id="catPrice">20</span> 🍪)</button>
-                <button id="addDogBtn" class="add-pet-btn">➕ Купить собачку (цена: <span id="dogPrice">20</span> 🍪)</button>
-            </div>
-            <div class="accessories-area" id="accessoriesArea"></div>
-            <div class="stats" style="margin-top: 12px;">
-                <span>🍽️ Корм восстанавливает 1 деление</span>
-                <span>🥫 жид.корм 5🍪 | 🍖 сухой 10🍪</span>
-            </div>
+    <!-- Игровой контейнер (изначально скрыт) -->
+    <div id="gameContainer" class="game-container">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="clicker">🍪 Кликер</button>
+            <button class="tab-btn" data-tab="pet">🐱 Питомцы</button>
+            <button class="tab-btn" data-tab="profile">👤 Профиль</button>
+            <button class="tab-btn" data-tab="players">🏆 Игроки</button>
+            <button class="tab-btn" data-tab="settings">⚙️ Настройки</button>
         </div>
-    </div>
 
-    <!-- Вкладка Профиль (авторизация + ник) -->
-    <div id="tab-profile" class="tab-content">
-        <div id="auth-section" style="background: var(--pet-bg); border-radius: 48px; padding: 16px; border: 1px solid var(--card-border);">
-            <div id="login-form">
-                <h3 style="margin-top: 0;">Вход в игру</h3>
-                <input type="email" id="login-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-                <input type="password" id="login-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-                <button id="login-btn" class="buy-btn" style="width: 100%;">Войти</button>
-                <p style="text-align: center; margin-top: 10px;">Нет аккаунта? <a href="#" id="show-register" style="color: var(--accent-gold);">Зарегистрироваться</a></p>
+        <!-- Вкладка Кликер -->
+        <div id="tab-clicker" class="tab-content active">
+            <div class="score-panel">
+                <div class="score-label">🍪 ПЕЧЕНЕК (очки)</div>
+                <div class="score-value" id="scoreDisplay">0</div>
             </div>
-            <div id="register-form" style="display: none;">
-                <h3 style="margin-top: 0;">Регистрация</h3>
-                <input type="text" id="reg-nick" placeholder="Ваш игровой ник" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-                <input type="email" id="reg-email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-                <input type="password" id="reg-password" placeholder="Пароль" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary);">
-                <button id="register-btn" class="buy-btn" style="width: 100%;">Зарегистрироваться</button>
-                <p style="text-align: center; margin-top: 10px;"><a href="#" id="show-login" style="color: var(--accent-gold);">Уже есть аккаунт? Войти</a></p>
+            <div class="click-area">
+                <button class="click-btn" id="clickButton">
+                    <span class="click-emoji">🐱</span>
+                    <span>Клик!</span>
+                </button>
             </div>
-            <div id="user-info" style="display: none; text-align: center;">
-                <p>Привет, <strong><span id="user-email"></span></strong>!</p>
-                <p>Ваш ник: <span id="user-nick-display" style="color: var(--accent-gold);"></span></p>
-                <div style="margin: 10px 0;">
-                    <input type="text" id="change-nick-input" placeholder="Новый ник" style="padding: 8px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary); width: 60%;">
-                    <button id="change-nick-btn" class="nick-btn">Сменить ник</button>
+            <div class="upgrade-card">
+                <div>
+                    <div class="upgrade-name">🤖 Авто-кликер (бот)</div>
+                    <div class="upgrade-desc">+1 печенька/сек за каждого</div>
                 </div>
-                <button id="logout-btn" class="reset-btn" style="background: #7f8c8d; color: white;">Выйти</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="upgrade-price" id="botPrice">10 🍪</div>
+                    <button class="buy-btn" id="buyBotBtn">Купить</button>
+                </div>
+            </div>
+            <div class="stats">
+                <span>🤖 Ботов: <strong id="botCount">0</strong></span>
+                <span>⚡ Клик/сек: <strong id="cps">0</strong></span>
             </div>
         </div>
-    </div>
 
-    <!-- Вкладка Игроки (список всех зарегистрированных) -->
-    <div id="tab-players" class="tab-content">
-        <div class="players-list" id="playersList">
-            <div style="text-align:center;">Загрузка списка игроков...</div>
+        <!-- Вкладка Питомцы (аналогично предыдущему коду) -->
+        <div id="tab-pet" class="tab-content">
+            <div class="pet-section">
+                <div class="active-pet-area" id="activePetArea"></div>
+                <div style="font-weight: bold; margin: 8px 0;">🐾 Мои питомцы</div>
+                <div id="petListContainer" class="pet-list"></div>
+                <div class="add-pet-area">
+                    <button id="addCatBtn" class="add-pet-btn">➕ Купить котика (цена: <span id="catPrice">20</span> 🍪)</button>
+                    <button id="addDogBtn" class="add-pet-btn">➕ Купить собачку (цена: <span id="dogPrice">20</span> 🍪)</button>
+                </div>
+                <div class="accessories-area" id="accessoriesArea"></div>
+                <div class="stats" style="margin-top: 12px;">
+                    <span>🍽️ Корм восстанавливает 1 деление</span>
+                    <span>🥫 жид.корм 5🍪 | 🍖 сухой 10🍪</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка Профиль (информация о пользователе, смена ника) -->
+        <div id="tab-profile" class="tab-content">
+            <div class="pet-section">
+                <div id="profileInfo" style="text-align: center;">
+                    <p>Email: <strong id="profileEmail"></strong></p>
+                    <p>Ваш ник: <strong id="profileNick" style="color: var(--accent-gold);"></strong></p>
+                    <div style="margin: 15px 0;">
+                        <input type="text" id="changeNickInput" placeholder="Новый ник" style="padding: 8px; border-radius: 40px; border: 1px solid var(--card-border); background: var(--stat-bg); color: var(--text-primary); width: 60%;">
+                        <button id="changeNickBtn" class="nick-btn">Сменить ник</button>
+                    </div>
+                    <button id="logoutBtn" class="reset-btn" style="background: #7f8c8d; color: white;">Выйти из аккаунта</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка Игроки -->
+        <div id="tab-players" class="tab-content">
+            <div class="players-list" id="playersList">Загрузка...</div>
+        </div>
+
+        <!-- Вкладка Настройки -->
+        <div id="tab-settings" class="tab-content">
+            <div class="settings-item">
+                <button id="resetGameBtn" class="reset-btn" style="width: auto; padding: 10px 25px;">⟳ Сбросить весь прогресс</button>
+            </div>
+            <div class="settings-item">
+                <button id="themeToggle" class="reset-btn" style="background: var(--buy-btn-bg); color: white;">🌓 Переключить тему</button>
+            </div>
+            <footer>Прогресс сохраняется только в облаке</footer>
         </div>
     </div>
 
-    <!-- Вкладка Настройки -->
-    <div id="tab-settings" class="tab-content">
-        <div class="settings-item">
-            <button id="resetBtn" class="reset-btn" style="width: auto; padding: 10px 25px;">⟳ Сбросить весь прогресс</button>
-        </div>
-        <div class="settings-item">
-            <button id="themeToggle" class="reset-btn" style="background: var(--buy-btn-bg); color: white;">🌓 Переключить тему</button>
-        </div>
-        <footer>Всё сохраняется в облаке после входа</footer>
-    </div>
-</div>
+    <script type="module">
+        // ========== Инициализация Firebase ==========
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
 
-<script type="module">
-    // ========== 1. Инициализация Firebase ==========
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
-    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyD4eYeInogumVcDp8SyuSRXgWq7rbzIoL4",
-        authDomain: "clicker-28573.firebaseapp.com",
-        projectId: "clicker-28573",
-        storageBucket: "clicker-28573.firebasestorage.app",
-        messagingSenderId: "1002257664870",
-        appId: "1:1002257664870:web:c05436dc9dd6d12a34d6a7",
-        measurementId: "G-SQWP6D1TH8"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // ========== 2. Игровые переменные ==========
-    let score = 0;
-    let bots = 0;
-    const BOT_BASE_PRICE = 10;
-    let pets = [];
-    let activePetId = null;
-    let nextPetId = 1;
-    let catBasePrice = 20;
-    let dogBasePrice = 20;
-
-    const accessoriesList = [
-        { id: 'hat', name: 'Шляпа', emoji: '🎩', price: 30 },
-        { id: 'glasses', name: 'Очки', emoji: '👓', price: 50 },
-        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 40 },
-        { id: 'crown', name: 'Корона', emoji: '👑', price: 100 }
-    ];
-
-    // DOM элементы
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const botCountSpan = document.getElementById('botCount');
-    const cpsSpan = document.getElementById('cps');
-    const buyBotBtn = document.getElementById('buyBotBtn');
-    const botPriceSpan = document.getElementById('botPrice');
-    const clickBtn = document.getElementById('clickButton');
-    const resetBtn = document.getElementById('resetBtn');
-    const activePetArea = document.getElementById('activePetArea');
-    const petListContainer = document.getElementById('petListContainer');
-    const addCatBtn = document.getElementById('addCatBtn');
-    const addDogBtn = document.getElementById('addDogBtn');
-    const catPriceSpan = document.getElementById('catPrice');
-    const dogPriceSpan = document.getElementById('dogPrice');
-    const accessoriesArea = document.getElementById('accessoriesArea');
-
-    // ========== 3. Звуки ==========
-    let audioCtx = null;
-    function initAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-    function playTone(freq, duration, volume = 0.2) {
-        if (!audioCtx) initAudio();
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume().then(() => playToneInternal(freq, duration, volume));
-        } else {
-            playToneInternal(freq, duration, volume);
-        }
-    }
-    function playToneInternal(freq, duration, volume) {
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(volume, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-        osc.start();
-        osc.stop(now + duration);
-    }
-    function playClick() { playTone(880, 0.08, 0.15); }
-    function playPurchase() { playTone(660, 0.12, 0.2); }
-    function playFeed() { playTone(523, 0.2, 0.2); }
-    function playAccessory() { playTone(784, 0.15, 0.18); }
-
-    // ========== 4. Вспомогательные функции ==========
-    function showMessage(text, bgColor) {
-        const msg = document.createElement('div');
-        msg.innerText = text;
-        msg.style.position = 'fixed';
-        msg.style.bottom = '70px';
-        msg.style.left = '50%';
-        msg.style.transform = 'translateX(-50%)';
-        msg.style.backgroundColor = bgColor;
-        msg.style.color = 'white';
-        msg.style.padding = '6px 18px';
-        msg.style.borderRadius = '60px';
-        msg.style.fontWeight = 'bold';
-        msg.style.zIndex = '9999';
-        document.body.appendChild(msg);
-        setTimeout(() => msg.remove(), 1500);
-    }
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    function getCatPrice() { return catBasePrice + pets.length * 5; }
-    function getDogPrice() { return dogBasePrice + pets.length * 5; }
-    function updatePetPricesUI() {
-        catPriceSpan.innerText = getCatPrice();
-        dogPriceSpan.innerText = getDogPrice();
-    }
-
-    // ========== 5. Облачное сохранение и загрузка (Firestore) ==========
-    async function saveGameProgress(userId) {
-        if (!userId) return;
-        const docRef = doc(db, 'users', userId);
-        const gameState = {
-            score: score,
-            bots: bots,
-            pets: pets,
-            activePetId: activePetId,
-            nextPetId: nextPetId,
-            lastUpdated: new Date().toISOString()
+        const firebaseConfig = {
+            apiKey: "AIzaSyD4eYeInogumVcDp8SyuSRXgWq7rbzIoL4",
+            authDomain: "clicker-28573.firebaseapp.com",
+            projectId: "clicker-28573",
+            storageBucket: "clicker-28573.firebasestorage.app",
+            messagingSenderId: "1002257664870",
+            appId: "1:1002257664870:web:c05436dc9dd6d12a34d6a7",
+            measurementId: "G-SQWP6D1TH8"
         };
-        await setDoc(docRef, gameState, { merge: true });
-        console.log("Прогресс сохранен в облаке!");
-    }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    async function loadGameProgress(userId) {
-        if (!userId) return;
-        const docRef = doc(db, 'users', userId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            score = data.score ?? 0;
-            bots = data.bots ?? 0;
-            if (data.pets && data.pets.length) {
-                pets = data.pets;
-                activePetId = data.activePetId ?? pets[0]?.id;
-                nextPetId = data.nextPetId ?? (Math.max(...pets.map(p=>p.id), 0) + 1);
+        // ========== Глобальные переменные игры ==========
+        let score = 0;
+        let bots = 0;
+        const BOT_BASE_PRICE = 10;
+        let pets = [];
+        let activePetId = null;
+        let nextPetId = 1;
+        let catBasePrice = 20;
+        let dogBasePrice = 20;
+        const accessoriesList = [
+            { id: 'hat', name: 'Шляпа', emoji: '🎩', price: 30 },
+            { id: 'glasses', name: 'Очки', emoji: '👓', price: 50 },
+            { id: 'bow', name: 'Бантик', emoji: '🎀', price: 40 },
+            { id: 'crown', name: 'Корона', emoji: '👑', price: 100 }
+        ];
+
+        // DOM элементы игры
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const botCountSpan = document.getElementById('botCount');
+        const cpsSpan = document.getElementById('cps');
+        const buyBotBtn = document.getElementById('buyBotBtn');
+        const botPriceSpan = document.getElementById('botPrice');
+        const clickBtn = document.getElementById('clickButton');
+        const resetGameBtn = document.getElementById('resetGameBtn');
+        const activePetArea = document.getElementById('activePetArea');
+        const petListContainer = document.getElementById('petListContainer');
+        const addCatBtn = document.getElementById('addCatBtn');
+        const addDogBtn = document.getElementById('addDogBtn');
+        const catPriceSpan = document.getElementById('catPrice');
+        const dogPriceSpan = document.getElementById('dogPrice');
+        const accessoriesArea = document.getElementById('accessoriesArea');
+        const profileEmailSpan = document.getElementById('profileEmail');
+        const profileNickSpan = document.getElementById('profileNick');
+        const changeNickInput = document.getElementById('changeNickInput');
+        const changeNickBtn = document.getElementById('changeNickBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const playersListDiv = document.getElementById('playersList');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // ========== Звуки ==========
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        function playTone(freq, duration, volume = 0.2) {
+            if (!audioCtx) initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => playToneInternal(freq, duration, volume));
+            } else {
+                playToneInternal(freq, duration, volume);
+            }
+        }
+        function playToneInternal(freq, duration, volume) {
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(volume, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            osc.start();
+            osc.stop(now + duration);
+        }
+        function playClick() { playTone(880, 0.08, 0.15); }
+        function playPurchase() { playTone(660, 0.12, 0.2); }
+        function playFeed() { playTone(523, 0.2, 0.2); }
+        function playAccessory() { playTone(784, 0.15, 0.18); }
+
+        // ========== Вспомогательные функции ==========
+        function showMessage(text, bgColor) {
+            const msg = document.createElement('div');
+            msg.innerText = text;
+            msg.style.position = 'fixed';
+            msg.style.bottom = '70px';
+            msg.style.left = '50%';
+            msg.style.transform = 'translateX(-50%)';
+            msg.style.backgroundColor = bgColor;
+            msg.style.color = 'white';
+            msg.style.padding = '6px 18px';
+            msg.style.borderRadius = '60px';
+            msg.style.fontWeight = 'bold';
+            msg.style.zIndex = '9999';
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 1500);
+        }
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        function getCatPrice() { return catBasePrice + pets.length * 5; }
+        function getDogPrice() { return dogBasePrice + pets.length * 5; }
+        function updatePetPricesUI() {
+            catPriceSpan.innerText = getCatPrice();
+            dogPriceSpan.innerText = getDogPrice();
+        }
+
+        // ========== Облачное сохранение и загрузка ==========
+        async function saveGameProgress(userId) {
+            if (!userId) return;
+            const docRef = doc(db, 'users', userId);
+            const gameState = {
+                score: score,
+                bots: bots,
+                pets: pets,
+                activePetId: activePetId,
+                nextPetId: nextPetId,
+                lastUpdated: new Date().toISOString()
+            };
+            await setDoc(docRef, gameState, { merge: true });
+            console.log("Прогресс сохранён в облаке");
+        }
+
+        async function loadGameProgress(userId) {
+            if (!userId) return;
+            const docRef = doc(db, 'users', userId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                score = data.score ?? 0;
+                bots = data.bots ?? 0;
+                if (data.pets && data.pets.length) {
+                    pets = data.pets;
+                    activePetId = data.activePetId ?? pets[0]?.id;
+                    nextPetId = data.nextPetId ?? (Math.max(...pets.map(p=>p.id), 0) + 1);
+                } else {
+                    initDefaultPet();
+                }
+                updateUI();
+                renderPetsAndAccessories();
+                showMessage(`Облачный прогресс загружен! У вас ${Math.floor(score)} печенек.`, '#4caf50');
             } else {
                 initDefaultPet();
+                score = 0;
+                bots = 0;
+                updateUI();
+                renderPetsAndAccessories();
+                await saveGameProgress(userId);
+                showMessage(`Добро пожаловать! Игра начинается с нуля.`, '#4caf50');
             }
-            updateUI();
-            renderPetsAndAccessories();
-            showMessage(`Облачный прогресс загружен! У вас ${Math.floor(score)} печенек.`, '#4caf50');
-        } else {
-            initDefaultPet();
-            score = 0;
-            bots = 0;
-            updateUI();
-            renderPetsAndAccessories();
-            await saveGameProgress(userId);
-            showMessage(`Добро пожаловать! Начните игру с нуля.`, '#4caf50');
         }
-        backupToLocalStorage();
-    }
 
-    function backupToLocalStorage() {
-        const gameState = { score, bots, pets, activePetId, nextPetId };
-        localStorage.setItem('clickerGame_backup', JSON.stringify(gameState));
-    }
-
-    async function saveGame() {
-        if (auth.currentUser) {
-            await saveGameProgress(auth.currentUser.uid);
+        async function saveGame() {
+            if (auth.currentUser) {
+                await saveGameProgress(auth.currentUser.uid);
+            }
         }
-        backupToLocalStorage();
-    }
 
-    function initDefaultPet() {
-        pets = [{
-            id: nextPetId++,
-            type: 'cat',
-            name: 'Бобби',
-            hunger: 3,
-            emoji: '🐱',
-            accessory: null
-        }];
-        activePetId = pets[0].id;
-    }
-
-    function initGameOffline() {
-        initDefaultPet();
-        score = 0;
-        bots = 0;
-        updateUI();
-        renderPetsAndAccessories();
-    }
-
-    // ========== 6. Основные игровые функции ==========
-    function getBotPrice() { return BOT_BASE_PRICE + bots * 2; }
-    function updateUI() {
-        scoreDisplay.innerText = Math.floor(score);
-        botCountSpan.innerText = bots;
-        botPriceSpan.innerText = getBotPrice() + ' 🍪';
-        cpsSpan.innerText = bots;
-        buyBotBtn.disabled = (score < getBotPrice());
-        updatePetPricesUI();
-    }
-    function addScore(amount) {
-        score += amount;
-        updateUI();
-        saveGame();
-    }
-    function resetGame() {
-        if (confirm('Сбросить ВСЁ: печеньки, ботов, всех питомцев?')) {
-            score = 0;
-            bots = 0;
-            nextPetId = 1;
-            initDefaultPet();
-            updateUI();
-            renderPetsAndAccessories();
-            saveGame();
-            showMessage('🧹 Прогресс сброшен', '#2c2e3a');
-        }
-    }
-
-    // ========== 7. Питомцы и аксессуары ==========
-    function addPet(type) {
-        let price = (type === 'cat') ? getCatPrice() : getDogPrice();
-        if (score >= price) {
-            score -= price;
-            const newPet = {
+        function initDefaultPet() {
+            pets = [{
                 id: nextPetId++,
-                type: type,
-                name: type === 'cat' ? 'Котик' : 'Пёсик',
+                type: 'cat',
+                name: 'Бобби',
                 hunger: 3,
-                emoji: type === 'cat' ? '🐱' : '🐶',
+                emoji: '🐱',
                 accessory: null
-            };
-            pets.push(newPet);
-            if (activePetId === null) activePetId = newPet.id;
-            saveGame();
-            updateUI();
-            renderPetsAndAccessories();
-            playPurchase();
-            showMessage(`🎉 Вы купили нового ${type === 'cat' ? 'котика' : 'пёсика'}!`, '#4caf50');
-        } else {
-            showMessage(`Не хватает печенек!`, '#f0ad4e');
-            playTone(440, 0.1, 0.1);
+            }];
+            activePetId = pets[0].id;
         }
-    }
-    function deletePet(petId) {
-        if (pets.length === 1) {
-            showMessage(`Нельзя удалить последнего питомца!`, '#d9534f');
-            return;
+
+        // ========== Основные игровые функции ==========
+        function getBotPrice() { return BOT_BASE_PRICE + bots * 2; }
+        function updateUI() {
+            scoreDisplay.innerText = Math.floor(score);
+            botCountSpan.innerText = bots;
+            botPriceSpan.innerText = getBotPrice() + ' 🍪';
+            cpsSpan.innerText = bots;
+            buyBotBtn.disabled = (score < getBotPrice());
+            updatePetPricesUI();
         }
-        const index = pets.findIndex(p => p.id === petId);
-        if (index !== -1) {
-            pets.splice(index, 1);
-            if (activePetId === petId) activePetId = pets[0]?.id || null;
-            renderPetsAndAccessories();
-            saveGame();
-            updateUI();
-            showMessage(`Питомец удалён`, '#6c757d');
-        }
-    }
-    function setActivePet(petId) {
-        activePetId = petId;
-        renderPetsAndAccessories();
-        updateUI();
-        saveGame();
-    }
-    function editPetName(petId) {
-        const pet = pets.find(p => p.id === petId);
-        if (!pet) return;
-        let newName = prompt('Введите новое имя питомца:', pet.name);
-        if (newName && newName.trim() !== '') {
-            pet.name = newName.trim().substring(0, 20);
-            renderPetsAndAccessories();
-            saveGame();
-            showMessage(`Имя изменено на ${pet.name}`, '#4caf50');
-        }
-    }
-    function feedActivePet(amount) {
-        if (!activePetId) return false;
-        const pet = pets.find(p => p.id === activePetId);
-        if (!pet) return false;
-        let newHunger = Math.min(3, pet.hunger + amount);
-        if (newHunger === pet.hunger) return false;
-        pet.hunger = newHunger;
-        renderPetsAndAccessories();
-        updateUI();
-        saveGame();
-        playFeed();
-        startHeartRain();
-        showMessage(`🍽️ ${pet.name} покормлен!`, '#4caf50');
-        return true;
-    }
-    function decreaseHungerForActive() {
-        if (!activePetId) return;
-        const pet = pets.find(p => p.id === activePetId);
-        if (pet && pet.hunger > 0) {
-            pet.hunger--;
-            renderPetsAndAccessories();
+        function addScore(amount) {
+            score += amount;
             updateUI();
             saveGame();
-            if (pet.hunger === 0) {
-                showMessage(`😿 ${pet.name} голоден! Покормите питомца.`, '#d9534f');
+        }
+        function resetGame() {
+            if (confirm('Сбросить ВСЁ: печеньки, ботов, всех питомцев? Это действие необратимо.')) {
+                score = 0;
+                bots = 0;
+                nextPetId = 1;
+                initDefaultPet();
+                updateUI();
+                renderPetsAndAccessories();
+                saveGame();
+                showMessage('🧹 Прогресс сброшен', '#2c2e3a');
             }
         }
-    }
-    function buyAccessory(accessoryId) {
-        if (!activePetId) return;
-        const pet = pets.find(p => p.id === activePetId);
-        if (!pet) return;
-        const accessory = accessoriesList.find(a => a.id === accessoryId);
-        if (!accessory) return;
-        if (score >= accessory.price) {
-            if (pet.accessory === accessoryId) {
-                showMessage(`У ${pet.name} уже надет ${accessory.name}`, '#f0ad4e');
+
+        // ========== Питомцы и аксессуары (без изменений) ==========
+        function addPet(type) {
+            let price = (type === 'cat') ? getCatPrice() : getDogPrice();
+            if (score >= price) {
+                score -= price;
+                const newPet = {
+                    id: nextPetId++,
+                    type: type,
+                    name: type === 'cat' ? 'Котик' : 'Пёсик',
+                    hunger: 3,
+                    emoji: type === 'cat' ? '🐱' : '🐶',
+                    accessory: null
+                };
+                pets.push(newPet);
+                if (activePetId === null) activePetId = newPet.id;
+                saveGame();
+                updateUI();
+                renderPetsAndAccessories();
+                playPurchase();
+                showMessage(`🎉 Вы купили нового ${type === 'cat' ? 'котика' : 'пёсика'}!`, '#4caf50');
+            } else {
+                showMessage(`Не хватает печенек!`, '#f0ad4e');
+                playTone(440, 0.1, 0.1);
+            }
+        }
+        function deletePet(petId) {
+            if (pets.length === 1) {
+                showMessage(`Нельзя удалить последнего питомца!`, '#d9534f');
                 return;
             }
-            score -= accessory.price;
-            pet.accessory = accessoryId;
+            const index = pets.findIndex(p => p.id === petId);
+            if (index !== -1) {
+                pets.splice(index, 1);
+                if (activePetId === petId) activePetId = pets[0]?.id || null;
+                renderPetsAndAccessories();
+                saveGame();
+                updateUI();
+                showMessage(`Питомец удалён`, '#6c757d');
+            }
+        }
+        function setActivePet(petId) {
+            activePetId = petId;
             renderPetsAndAccessories();
             updateUI();
             saveGame();
-            playAccessory();
-            showMessage(`🎀 ${pet.name} теперь носит ${accessory.name}!`, '#4caf50');
-        } else {
-            showMessage(`Не хватает печенек для ${accessory.name}`, '#f0ad4e');
         }
-    }
-    function removeAccessory() {
-        if (!activePetId) return;
-        const pet = pets.find(p => p.id === activePetId);
-        if (!pet) return;
-        if (pet.accessory) {
-            pet.accessory = null;
+        function editPetName(petId) {
+            const pet = pets.find(p => p.id === petId);
+            if (!pet) return;
+            let newName = prompt('Введите новое имя питомца:', pet.name);
+            if (newName && newName.trim() !== '') {
+                pet.name = newName.trim().substring(0, 20);
+                renderPetsAndAccessories();
+                saveGame();
+                showMessage(`Имя изменено на ${pet.name}`, '#4caf50');
+            }
+        }
+        function feedActivePet(amount) {
+            if (!activePetId) return false;
+            const pet = pets.find(p => p.id === activePetId);
+            if (!pet) return false;
+            let newHunger = Math.min(3, pet.hunger + amount);
+            if (newHunger === pet.hunger) return false;
+            pet.hunger = newHunger;
             renderPetsAndAccessories();
+            updateUI();
             saveGame();
-            playAccessory();
-            showMessage(`Аксессуар снят с ${pet.name}`, '#6c757d');
-        } else {
-            showMessage(`У ${pet.name} нет аксессуара`, '#f0ad4e');
+            playFeed();
+            startHeartRain();
+            showMessage(`🍽️ ${pet.name} покормлен!`, '#4caf50');
+            return true;
         }
-    }
-    function getPetDisplayEmoji(pet) {
-        let base = pet.emoji;
-        if (pet.accessory) {
-            const acc = accessoriesList.find(a => a.id === pet.accessory);
-            if (acc) base += ' ' + acc.emoji;
-        }
-        return base;
-    }
-    function buyFoodForActive(price, gain) {
-        if (score >= price) {
-            if (feedActivePet(gain)) {
-                score -= price;
+        function decreaseHungerForActive() {
+            if (!activePetId) return;
+            const pet = pets.find(p => p.id === activePetId);
+            if (pet && pet.hunger > 0) {
+                pet.hunger--;
+                renderPetsAndAccessories();
                 updateUI();
                 saveGame();
-            } else {
-                showMessage(`Питомец уже сыт!`, '#f0ad4e');
-            }
-        } else {
-            showMessage(`Не хватает печенек!`, '#f0ad4e');
-        }
-    }
-
-    // ========== 8. Отрисовка питомцев и аксессуаров ==========
-    function renderPetsAndAccessories() {
-        const activePet = pets.find(p => p.id === activePetId);
-        if (activePet) {
-            const hungerDots = [];
-            for (let i=0; i<3; i++) {
-                hungerDots.push(`<div class="hunger-dot ${i >= activePet.hunger ? 'empty' : ''}"></div>`);
-            }
-            activePetArea.innerHTML = `
-                <div class="active-pet-info">
-                    <div class="active-pet-emoji">${getPetDisplayEmoji(activePet)}</div>
-                    <div>
-                        <div class="active-pet-name">${escapeHtml(activePet.name)}</div>
-                        <div class="hunger-bar">${hungerDots.join('')}</div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button id="feedWetBtn" class="food-btn">🥫 Жид.корм (5)</button>
-                    <button id="feedDryBtn" class="food-btn">🍖 Сухой (10)</button>
-                </div>
-            `;
-            document.getElementById('feedWetBtn')?.addEventListener('click', () => buyFoodForActive(5, 1));
-            document.getElementById('feedDryBtn')?.addEventListener('click', () => buyFoodForActive(10, 1));
-        } else {
-            activePetArea.innerHTML = `<div>Нет питомцев. Купите первого!</div>`;
-        }
-        if (pets.length === 0) {
-            petListContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет питомцев. Купите котика или собачку!</div>';
-        } else {
-            petListContainer.innerHTML = pets.map(pet => `
-                <div class="pet-card ${activePetId === pet.id ? 'active-pet-card' : ''}" data-id="${pet.id}">
-                    <div class="pet-card-info">
-                        <div class="pet-card-emoji">${getPetDisplayEmoji(pet)}</div>
-                        <div>
-                            <div class="pet-card-name">${escapeHtml(pet.name)}</div>
-                            <div class="pet-card-hunger">Сытость: ${pet.hunger}/3</div>
-                        </div>
-                    </div>
-                    <div class="pet-card-actions">
-                        <button class="edit-name-btn" data-id="${pet.id}" title="Изменить имя">✏️</button>
-                        <button class="delete-pet" data-id="${pet.id}" title="Удалить">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-            document.querySelectorAll('.pet-card').forEach(card => {
-                const id = parseInt(card.dataset.id);
-                card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('edit-name-btn') || e.target.classList.contains('delete-pet')) return;
-                    setActivePet(id);
-                });
-            });
-            document.querySelectorAll('.edit-name-btn').forEach(btn => {
-                const id = parseInt(btn.dataset.id);
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    editPetName(id);
-                });
-            });
-            document.querySelectorAll('.delete-pet').forEach(btn => {
-                const id = parseInt(btn.dataset.id);
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    deletePet(id);
-                });
-            });
-        }
-        if (activePet) {
-            const currentAcc = activePet.accessory;
-            const accHtml = `
-                <div class="accessories-title">🎀 Аксессуары для ${escapeHtml(activePet.name)}</div>
-                <div class="accessories-grid">
-                    ${accessoriesList.map(acc => `
-                        <div class="accessory-item">
-                            <span>${acc.emoji} ${acc.name}</span>
-                            <button class="accessory-btn" data-acc="${acc.id}" ${currentAcc === acc.id ? 'disabled style="opacity:0.6;"' : ''}>${currentAcc === acc.id ? 'Надето' : acc.price+'🍪'}</button>
-                        </div>
-                    `).join('')}
-                </div>
-                <button id="removeAccBtn" class="food-btn" style="background: #7f8c8d;">Снять аксессуар</button>
-            `;
-            accessoriesArea.innerHTML = accHtml;
-            accessoriesList.forEach(acc => {
-                const btn = document.querySelector(`.accessory-btn[data-acc="${acc.id}"]`);
-                if (btn && !btn.disabled) {
-                    btn.addEventListener('click', () => buyAccessory(acc.id));
+                if (pet.hunger === 0) {
+                    showMessage(`😿 ${pet.name} голоден! Покормите питомца.`, '#d9534f');
                 }
-            });
-            const removeBtn = document.getElementById('removeAccBtn');
-            if (removeBtn) removeBtn.addEventListener('click', removeAccessory);
-        } else {
-            accessoriesArea.innerHTML = '<div class="accessories-title">🎀 Выберите питомца для аксессуаров</div>';
-        }
-    }
-
-    // ========== 9. Дождь из сердечек ==========
-    let rainActive = false;
-    function startHeartRain() {
-        if (rainActive) return;
-        rainActive = true;
-        const container = document.createElement('div');
-        container.className = 'heart-rain';
-        document.body.appendChild(container);
-        const heartCount = 40;
-        for (let i=0; i<heartCount; i++) {
-            const heart = document.createElement('div');
-            heart.className = 'heart';
-            heart.innerHTML = '❤️';
-            heart.style.left = Math.random() * 100 + '%';
-            heart.style.animationDuration = 1 + Math.random() * 2 + 's';
-            heart.style.fontSize = (1 + Math.random() * 2) + 'rem';
-            heart.style.opacity = 0.5 + Math.random() * 0.5;
-            container.appendChild(heart);
-        }
-        setTimeout(() => {
-            container.remove();
-            rainActive = false;
-        }, 2500);
-    }
-
-    // ========== 10. Таймеры ==========
-    let intervalId = null;
-    function startAutoTick() {
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(() => {
-            if (bots > 0) {
-                addScore(bots);
-                showFloatingNumber(bots);
             }
-        }, 1000);
-    }
-    let hungerInterval = null;
-    function startHungerTick() {
-        if (hungerInterval) clearInterval(hungerInterval);
-        hungerInterval = setInterval(() => decreaseHungerForActive(), 10000);
-    }
-    function showFloatingNumber(amount) {
-        if (!amount) return;
-        const el = document.createElement('div');
-        el.innerText = `+${amount}`;
-        el.style.position = 'fixed';
-        el.style.left = '50%';
-        el.style.top = '40%';
-        el.style.transform = 'translateX(-50%)';
-        el.style.fontSize = '2rem';
-        el.style.fontWeight = 'bold';
-        el.style.color = '#FFD966';
-        el.style.textShadow = '0 0 5px black';
-        el.style.pointerEvents = 'none';
-        el.style.zIndex = '1000';
-        el.style.opacity = '1';
-        el.style.transition = 'all 0.6s ease-out';
-        document.body.appendChild(el);
-        requestAnimationFrame(() => {
-            el.style.top = '20%';
-            el.style.opacity = '0';
-        });
-        setTimeout(() => el.remove(), 600);
-    }
-
-    // ========== 11. Тема ==========
-    function initTheme() {
-        const saved = localStorage.getItem('clickerTheme');
-        if (saved === 'light') document.body.classList.add('light-theme');
-        else document.body.classList.remove('light-theme');
-    }
-    function toggleTheme() {
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        localStorage.setItem('clickerTheme', isLight ? 'light' : 'dark');
-    }
-
-    // ========== 12. Вкладки ==========
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.getElementById(`tab-${tabId}`).classList.add('active');
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
-        // Если переключились на вкладку игроков, обновить список
-        if (tabId === 'players') {
-            loadPlayersList();
         }
-    }
-
-    // ========== 13. Список игроков ==========
-    async function loadPlayersList() {
-        const playersContainer = document.getElementById('playersList');
-        playersContainer.innerHTML = '<div style="text-align:center;">Загрузка...</div>';
-        try {
-            const usersRef = collection(db, 'users');
-            const q = query(usersRef, orderBy('lastUpdated', 'desc'));
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                playersContainer.innerHTML = '<div style="text-align:center;">Пока нет зарегистрированных игроков</div>';
-                return;
+        function buyAccessory(accessoryId) {
+            if (!activePetId) return;
+            const pet = pets.find(p => p.id === activePetId);
+            if (!pet) return;
+            const accessory = accessoriesList.find(a => a.id === accessoryId);
+            if (!accessory) return;
+            if (score >= accessory.price) {
+                if (pet.accessory === accessoryId) {
+                    showMessage(`У ${pet.name} уже надет ${accessory.name}`, '#f0ad4e');
+                    return;
+                }
+                score -= accessory.price;
+                pet.accessory = accessoryId;
+                renderPetsAndAccessories();
+                updateUI();
+                saveGame();
+                playAccessory();
+                showMessage(`🎀 ${pet.name} теперь носит ${accessory.name}!`, '#4caf50');
+            } else {
+                showMessage(`Не хватает печенек для ${accessory.name}`, '#f0ad4e');
             }
-            let html = '';
-            for (const docSnap of querySnapshot.docs) {
-                const data = docSnap.data();
-                // Получаем email из auth? В users нет email, но мы можем хранить отдельно. Для простоты попробуем получить из auth по uid нельзя, поэтому будем хранить email в документе пользователя.
-                // Мы при регистрации и сохранении ника будем также сохранять email в поле userEmail.
-                const email = data.userEmail || 'email не указан';
-                const nick = data.displayName || 'Без ника';
-                html += `
-                    <div class="player-item">
-                        <span class="player-email">${escapeHtml(email)}</span>
-                        <span class="player-nick">${escapeHtml(nick)}</span>
+        }
+        function removeAccessory() {
+            if (!activePetId) return;
+            const pet = pets.find(p => p.id === activePetId);
+            if (!pet) return;
+            if (pet.accessory) {
+                pet.accessory = null;
+                renderPetsAndAccessories();
+                saveGame();
+                playAccessory();
+                showMessage(`Аксессуар снят с ${pet.name}`, '#6c757d');
+            } else {
+                showMessage(`У ${pet.name} нет аксессуара`, '#f0ad4e');
+            }
+        }
+        function getPetDisplayEmoji(pet) {
+            let base = pet.emoji;
+            if (pet.accessory) {
+                const acc = accessoriesList.find(a => a.id === pet.accessory);
+                if (acc) base += ' ' + acc.emoji;
+            }
+            return base;
+        }
+        function buyFoodForActive(price, gain) {
+            if (score >= price) {
+                if (feedActivePet(gain)) {
+                    score -= price;
+                    updateUI();
+                    saveGame();
+                } else {
+                    showMessage(`Питомец уже сыт!`, '#f0ad4e');
+                }
+            } else {
+                showMessage(`Не хватает печенек!`, '#f0ad4e');
+            }
+        }
+
+        function renderPetsAndAccessories() {
+            const activePet = pets.find(p => p.id === activePetId);
+            if (activePet) {
+                const hungerDots = [];
+                for (let i=0; i<3; i++) {
+                    hungerDots.push(`<div class="hunger-dot ${i >= activePet.hunger ? 'empty' : ''}"></div>`);
+                }
+                activePetArea.innerHTML = `
+                    <div class="active-pet-info">
+                        <div class="active-pet-emoji">${getPetDisplayEmoji(activePet)}</div>
+                        <div>
+                            <div class="active-pet-name">${escapeHtml(activePet.name)}</div>
+                            <div class="hunger-bar">${hungerDots.join('')}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="feedWetBtn" class="food-btn">🥫 Жид.корм (5)</button>
+                        <button id="feedDryBtn" class="food-btn">🍖 Сухой (10)</button>
                     </div>
                 `;
+                document.getElementById('feedWetBtn')?.addEventListener('click', () => buyFoodForActive(5, 1));
+                document.getElementById('feedDryBtn')?.addEventListener('click', () => buyFoodForActive(10, 1));
+            } else {
+                activePetArea.innerHTML = `<div>Нет питомцев. Купите первого!</div>`;
             }
-            playersContainer.innerHTML = html || '<div style="text-align:center;">Нет данных</div>';
-        } catch (error) {
-            console.error("Ошибка загрузки списка игроков:", error);
-            playersContainer.innerHTML = '<div style="text-align:center;">Ошибка загрузки списка</div>';
+            if (pets.length === 0) {
+                petListContainer.innerHTML = '<div style="text-align:center; padding:20px;">Нет питомцев. Купите котика или собачку!</div>';
+            } else {
+                petListContainer.innerHTML = pets.map(pet => `
+                    <div class="pet-card ${activePetId === pet.id ? 'active-pet-card' : ''}" data-id="${pet.id}">
+                        <div class="pet-card-info">
+                            <div class="pet-card-emoji">${getPetDisplayEmoji(pet)}</div>
+                            <div>
+                                <div class="pet-card-name">${escapeHtml(pet.name)}</div>
+                                <div class="pet-card-hunger">Сытость: ${pet.hunger}/3</div>
+                            </div>
+                        </div>
+                        <div class="pet-card-actions">
+                            <button class="edit-name-btn" data-id="${pet.id}" title="Изменить имя">✏️</button>
+                            <button class="delete-pet" data-id="${pet.id}" title="Удалить">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+                document.querySelectorAll('.pet-card').forEach(card => {
+                    const id = parseInt(card.dataset.id);
+                    card.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('edit-name-btn') || e.target.classList.contains('delete-pet')) return;
+                        setActivePet(id);
+                    });
+                });
+                document.querySelectorAll('.edit-name-btn').forEach(btn => {
+                    const id = parseInt(btn.dataset.id);
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        editPetName(id);
+                    });
+                });
+                document.querySelectorAll('.delete-pet').forEach(btn => {
+                    const id = parseInt(btn.dataset.id);
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deletePet(id);
+                    });
+                });
+            }
+            if (activePet) {
+                const currentAcc = activePet.accessory;
+                const accHtml = `
+                    <div class="accessories-title">🎀 Аксессуары для ${escapeHtml(activePet.name)}</div>
+                    <div class="accessories-grid">
+                        ${accessoriesList.map(acc => `
+                            <div class="accessory-item">
+                                <span>${acc.emoji} ${acc.name}</span>
+                                <button class="accessory-btn" data-acc="${acc.id}" ${currentAcc === acc.id ? 'disabled style="opacity:0.6;"' : ''}>${currentAcc === acc.id ? 'Надето' : acc.price+'🍪'}</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button id="removeAccBtn" class="food-btn" style="background: #7f8c8d;">Снять аксессуар</button>
+                `;
+                accessoriesArea.innerHTML = accHtml;
+                accessoriesList.forEach(acc => {
+                    const btn = document.querySelector(`.accessory-btn[data-acc="${acc.id}"]`);
+                    if (btn && !btn.disabled) {
+                        btn.addEventListener('click', () => buyAccessory(acc.id));
+                    }
+                });
+                const removeBtn = document.getElementById('removeAccBtn');
+                if (removeBtn) removeBtn.addEventListener('click', removeAccessory);
+            } else {
+                accessoriesArea.innerHTML = '<div class="accessories-title">🎀 Выберите питомца для аксессуаров</div>';
+            }
         }
-    }
 
-    // ========== 14. Управление ником (displayName) и сохранение в Firestore ==========
-    async function updateUserDisplayName(userId, newNick) {
-        if (!userId) return;
-        // Обновляем в Auth (опционально)
-        if (auth.currentUser) {
-            try {
-                await updateProfile(auth.currentUser, { displayName: newNick });
-            } catch(e) { console.warn("Не удалось обновить displayName в Auth", e); }
+        // ========== Дождь из сердечек ==========
+        let rainActive = false;
+        function startHeartRain() {
+            if (rainActive) return;
+            rainActive = true;
+            const container = document.createElement('div');
+            container.className = 'heart-rain';
+            document.body.appendChild(container);
+            const heartCount = 40;
+            for (let i=0; i<heartCount; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.innerHTML = '❤️';
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.animationDuration = 1 + Math.random() * 2 + 's';
+                heart.style.fontSize = (1 + Math.random() * 2) + 'rem';
+                heart.style.opacity = 0.5 + Math.random() * 0.5;
+                container.appendChild(heart);
+            }
+            setTimeout(() => {
+                container.remove();
+                rainActive = false;
+            }, 2500);
         }
-        // Сохраняем ник в Firestore в документе пользователя
-        const userDocRef = doc(db, 'users', userId);
-        await setDoc(userDocRef, { displayName: newNick, userEmail: auth.currentUser?.email || '' }, { merge: true });
-        showMessage(`Ник изменён на ${newNick}`, '#4caf50');
-        // Обновляем отображение в профиле
-        const nickSpan = document.getElementById('user-nick-display');
-        if (nickSpan) nickSpan.textContent = newNick;
-        // Если открыта вкладка игроков, обновить список
-        if (document.getElementById('tab-players').classList.contains('active')) {
-            loadPlayersList();
-        }
-    }
 
-    async function saveUserNickOnRegister(userId, email, nick) {
-        const userDocRef = doc(db, 'users', userId);
-        await setDoc(userDocRef, { displayName: nick, userEmail: email }, { merge: true });
-    }
-
-    // ========== 15. UI для авторизации и профиля ==========
-    const loginFormDiv = document.getElementById('login-form');
-    const registerFormDiv = document.getElementById('register-form');
-    const userInfoDiv = document.getElementById('user-info');
-    const userEmailSpan = document.getElementById('user-email');
-    const userNickSpan = document.getElementById('user-nick-display');
-
-    function updateUIForUser(user) {
-        if (user) {
-            loginFormDiv.style.display = 'none';
-            registerFormDiv.style.display = 'none';
-            userInfoDiv.style.display = 'block';
-            userEmailSpan.textContent = user.email;
-            // Загружаем ник из Firestore
-            const userId = user.uid;
-            const userDocRef = doc(db, 'users', userId);
-            getDoc(userDocRef).then(docSnap => {
-                if (docSnap.exists() && docSnap.data().displayName) {
-                    const nick = docSnap.data().displayName;
-                    userNickSpan.textContent = nick;
-                } else {
-                    userNickSpan.textContent = 'не задан';
+        // ========== Таймеры ==========
+        let intervalId = null;
+        function startAutoTick() {
+            if (intervalId) clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                if (bots > 0) {
+                    addScore(bots);
+                    showFloatingNumber(bots);
                 }
-            }).catch(() => { userNickSpan.textContent = 'не задан'; });
-            loadGameProgress(userId);
-        } else {
-            loginFormDiv.style.display = 'block';
+            }, 1000);
+        }
+        let hungerInterval = null;
+        function startHungerTick() {
+            if (hungerInterval) clearInterval(hungerInterval);
+            hungerInterval = setInterval(() => decreaseHungerForActive(), 10000);
+        }
+        function showFloatingNumber(amount) {
+            if (!amount) return;
+            const el = document.createElement('div');
+            el.innerText = `+${amount}`;
+            el.style.position = 'fixed';
+            el.style.left = '50%';
+            el.style.top = '40%';
+            el.style.transform = 'translateX(-50%)';
+            el.style.fontSize = '2rem';
+            el.style.fontWeight = 'bold';
+            el.style.color = '#FFD966';
+            el.style.textShadow = '0 0 5px black';
+            el.style.pointerEvents = 'none';
+            el.style.zIndex = '1000';
+            el.style.opacity = '1';
+            el.style.transition = 'all 0.6s ease-out';
+            document.body.appendChild(el);
+            requestAnimationFrame(() => {
+                el.style.top = '20%';
+                el.style.opacity = '0';
+            });
+            setTimeout(() => el.remove(), 600);
+        }
+
+        // ========== Тема ==========
+        function initTheme() {
+            const saved = localStorage.getItem('clickerTheme');
+            if (saved === 'light') document.body.classList.add('light-theme');
+            else document.body.classList.remove('light-theme');
+        }
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            localStorage.setItem('clickerTheme', isLight ? 'light' : 'dark');
+        }
+
+        // ========== Вкладки ==========
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+            if (tabId === 'players') loadPlayersList();
+        }
+
+        // ========== Список игроков ==========
+        async function loadPlayersList() {
+            if (!playersListDiv) return;
+            playersListDiv.innerHTML = 'Загрузка...';
+            try {
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, orderBy('lastUpdated', 'desc'));
+                const querySnapshot = await getDocs(q);
+                if (querySnapshot.empty) {
+                    playersListDiv.innerHTML = 'Пока нет зарегистрированных игроков';
+                    return;
+                }
+                let html = '';
+                for (const docSnap of querySnapshot.docs) {
+                    const data = docSnap.data();
+                    const email = data.userEmail || 'email не указан';
+                    const nick = data.displayName || 'Без ника';
+                    html += `<div class="player-item"><span class="player-email">${escapeHtml(email)}</span><span class="player-nick">${escapeHtml(nick)}</span></div>`;
+                }
+                playersListDiv.innerHTML = html;
+            } catch (error) {
+                console.error(error);
+                playersListDiv.innerHTML = 'Ошибка загрузки списка';
+            }
+        }
+
+        // ========== Управление ником ==========
+        async function updateUserDisplayName(userId, newNick) {
+            if (!userId) return;
+            if (auth.currentUser) {
+                try {
+                    await updateProfile(auth.currentUser, { displayName: newNick });
+                } catch(e) { console.warn(e); }
+            }
+            const userDocRef = doc(db, 'users', userId);
+            await setDoc(userDocRef, { displayName: newNick, userEmail: auth.currentUser?.email || '' }, { merge: true });
+            showMessage(`Ник изменён на ${newNick}`, '#4caf50');
+            if (profileNickSpan) profileNickSpan.textContent = newNick;
+            if (document.getElementById('tab-players').classList.contains('active')) loadPlayersList();
+        }
+
+        async function saveUserNickOnRegister(userId, email, nick) {
+            const userDocRef = doc(db, 'users', userId);
+            await setDoc(userDocRef, { displayName: nick, userEmail: email }, { merge: true });
+        }
+
+        // ========== Авторизация: переключение форм ==========
+        const authContainer = document.getElementById('authContainer');
+        const gameContainer = document.getElementById('gameContainer');
+        const loginFormDiv = document.getElementById('loginForm');
+        const registerFormDiv = document.getElementById('registerForm');
+        const showRegisterLink = document.getElementById('showRegisterLink');
+        const showLoginLink = document.getElementById('showLoginLink');
+        const authError = document.getElementById('authError');
+        const regError = document.getElementById('regError');
+
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginFormDiv.style.display = 'none';
+            registerFormDiv.style.display = 'block';
+            authError.innerText = '';
+            regError.innerText = '';
+        });
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
             registerFormDiv.style.display = 'none';
-            userInfoDiv.style.display = 'none';
-            initGameOffline();
+            loginFormDiv.style.display = 'block';
+            authError.innerText = '';
+            regError.innerText = '';
+        });
+
+        // Вход
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            authError.innerText = '';
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // После успешного входа onAuthStateChanged покажет игру
+            } catch (error) {
+                authError.innerText = error.message;
+            }
+        });
+        // Регистрация
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const nick = document.getElementById('regNick').value.trim();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            regError.innerText = '';
+            if (!nick) {
+                regError.innerText = 'Введите игровой ник';
+                return;
+            }
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userId = userCredential.user.uid;
+                await saveUserNickOnRegister(userId, email, nick);
+            } catch (error) {
+                regError.innerText = error.message;
+            }
+        });
+
+        // Выход
+        logoutBtn.addEventListener('click', async () => {
+            await signOut(auth);
+        });
+
+        // Смена ника
+        changeNickBtn.addEventListener('click', async () => {
+            const newNick = changeNickInput.value.trim();
+            if (!newNick) {
+                showMessage('Введите новый ник', '#f0ad4e');
+                return;
+            }
+            if (auth.currentUser) {
+                await updateUserDisplayName(auth.currentUser.uid, newNick);
+                changeNickInput.value = '';
+            } else {
+                showMessage('Вы не авторизованы', '#f0ad4e');
+            }
+        });
+
+        // ========== Обработка состояния авторизации ==========
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Пользователь вошёл: показываем игру, скрываем блок авторизации
+                authContainer.style.display = 'none';
+                gameContainer.style.display = 'block';
+                // Загружаем профиль
+                profileEmailSpan.textContent = user.email;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists() && userDoc.data().displayName) {
+                    profileNickSpan.textContent = userDoc.data().displayName;
+                } else {
+                    profileNickSpan.textContent = 'не задан';
+                }
+                // Загружаем игровой прогресс
+                await loadGameProgress(user.uid);
+                // Запускаем таймеры (если ещё не запущены)
+                if (!intervalId) startAutoTick();
+                if (!hungerInterval) startHungerTick();
+                // Если список игроков открыт, обновить
+                if (document.getElementById('tab-players').classList.contains('active')) loadPlayersList();
+            } else {
+                // Пользователь вышел: скрываем игру, показываем блок авторизации
+                if (intervalId) clearInterval(intervalId);
+                if (hungerInterval) clearInterval(hungerInterval);
+                intervalId = null;
+                hungerInterval = null;
+                gameContainer.style.display = 'none';
+                authContainer.style.display = 'block';
+                // Сбрасываем формы
+                loginFormDiv.style.display = 'block';
+                registerFormDiv.style.display = 'none';
+                authError.innerText = '';
+                regError.innerText = '';
+                document.getElementById('loginEmail').value = '';
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('regNick').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+            }
+        });
+
+        // ========== Обработчики игровых кнопок ==========
+        function handleClick() {
+            addScore(1);
+            playClick();
+            clickBtn.style.transform = 'scale(0.96)';
+            setTimeout(() => { if(clickBtn) clickBtn.style.transform = ''; }, 90);
         }
-    }
-
-    document.getElementById('login-btn').addEventListener('click', async () => {
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value;
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            showMessage(`Добро пожаловать, ${email}!`, '#4caf50');
-        } catch (error) {
-            showMessage(`Ошибка: ${error.message}`, '#d9534f');
+        function buyBotAction() {
+            let price = getBotPrice();
+            if (score >= price) {
+                score -= price;
+                bots++;
+                updateUI();
+                saveGame();
+                playPurchase();
+                if (navigator.vibrate) navigator.vibrate(30);
+            } else {
+                playTone(440, 0.1, 0.1);
+            }
         }
-    });
+        clickBtn?.addEventListener('click', handleClick);
+        buyBotBtn?.addEventListener('click', buyBotAction);
+        resetGameBtn?.addEventListener('click', resetGame);
+        themeToggle?.addEventListener('click', toggleTheme);
+        addCatBtn?.addEventListener('click', () => addPet('cat'));
+        addDogBtn?.addEventListener('click', () => addPet('dog'));
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
 
-    document.getElementById('register-btn').addEventListener('click', async () => {
-        const nick = document.getElementById('reg-nick').value.trim();
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
-        if (!nick) {
-            showMessage(`Введите игровой ник!`, '#f0ad4e');
-            return;
-        }
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const userId = userCredential.user.uid;
-            await saveUserNickOnRegister(userId, email, nick);
-            showMessage(`Аккаунт создан для ${email}!`, '#4caf50');
-        } catch (error) {
-            showMessage(`Ошибка: ${error.message}`, '#d9534f');
-        }
-    });
-
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        await signOut(auth);
-        showMessage(`Вы вышли из аккаунта.`, '#6c757d');
-    });
-
-    document.getElementById('show-register').addEventListener('click', (e) => {
-        e.preventDefault();
-        loginFormDiv.style.display = 'none';
-        registerFormDiv.style.display = 'block';
-    });
-    document.getElementById('show-login').addEventListener('click', (e) => {
-        e.preventDefault();
-        registerFormDiv.style.display = 'none';
-        loginFormDiv.style.display = 'block';
-    });
-
-    document.getElementById('change-nick-btn').addEventListener('click', async () => {
-        const newNick = document.getElementById('change-nick-input').value.trim();
-        if (!newNick) {
-            showMessage(`Введите новый ник`, '#f0ad4e');
-            return;
-        }
-        if (auth.currentUser) {
-            await updateUserDisplayName(auth.currentUser.uid, newNick);
-            document.getElementById('change-nick-input').value = '';
-        } else {
-            showMessage(`Вы не авторизованы`, '#f0ad4e');
-        }
-    });
-
-    onAuthStateChanged(auth, (user) => {
-        updateUIForUser(user);
-    });
-
-    // ========== 16. Обработчики событий ==========
-    function handleClick() {
-        addScore(1);
-        playClick();
-        clickBtn.style.transform = 'scale(0.96)';
-        setTimeout(() => { if(clickBtn) clickBtn.style.transform = ''; }, 90);
-    }
-    function buyBotAction() {
-        let price = getBotPrice();
-        if (score >= price) {
-            score -= price;
-            bots++;
-            updateUI();
-            saveGame();
-            playPurchase();
-            if (navigator.vibrate) navigator.vibrate(30);
-        } else {
-            playTone(440, 0.1, 0.1);
-        }
-    }
-    clickBtn?.addEventListener('click', handleClick);
-    buyBotBtn?.addEventListener('click', buyBotAction);
-    resetBtn?.addEventListener('click', resetGame);
-    document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
-    addCatBtn?.addEventListener('click', () => addPet('cat'));
-    addDogBtn?.addEventListener('click', () => addPet('dog'));
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-    });
-
-    // ========== 17. Старт игры ==========
-    initTheme();
-    startAutoTick();
-    startHungerTick();
-    setInterval(() => saveGame(), 10000);
-    document.body.addEventListener('click', () => {
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        else if (!audioCtx) initAudio();
-    }, { once: true });
-</script>
+        // ========== Старт ==========
+        initTheme();
+        // Автозапуск таймеров будет после входа (см. onAuthStateChanged)
+        document.body.addEventListener('click', () => {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            else if (!audioCtx) initAudio();
+        }, { once: true });
+    </script>
 </body>
 </html>
