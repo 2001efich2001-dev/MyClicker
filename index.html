@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Кликер · Облачное сохранение · Только авторизация</title>
+    <title>Кликер · Питомцы · Облачное сохранение · Топ игроков</title>
     <style>
-        /* ========== СТИЛИ (без изменений, но добавлен оверлей) ========== */
+        /* ========== СТИЛИ ========== */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -67,6 +67,7 @@
             margin: 0;
             padding: 20px;
             color: var(--text-primary);
+            flex-direction: column;
         }
         /* Контейнер игры (изначально скрыт) */
         .game-container {
@@ -120,6 +121,17 @@
             color: #ff8888;
             margin-top: 10px;
             font-size: 0.85rem;
+        }
+        /* Футер */
+        .global-footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+        .global-footer p {
+            margin: 4px 0;
         }
 
         /* Остальные стили (вкладки, кнопки и т.д.) без изменений */
@@ -394,18 +406,46 @@
             border-bottom: 1px solid var(--card-border);
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+        .player-info {
+            display: flex;
+            flex-direction: column;
         }
         .player-email {
             font-weight: bold;
+            font-size: 0.9rem;
         }
         .player-nick {
             color: var(--accent-gold);
+            font-size: 0.8rem;
         }
-        footer {
+        .player-score {
+            font-weight: bold;
+            background: var(--card-bg);
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+        .global-footer {
             text-align: center;
-            font-size: 0.7rem;
+            margin-top: 30px;
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            margin-top: 20px;
+            opacity: 0.7;
+        }
+        .global-footer p {
+            margin: 4px 0;
+        }
+        @media (max-width: 480px) {
+            .click-btn { width: 140px; height: 140px; }
+            .click-emoji { font-size: 2rem; }
+            .score-value { font-size: 2.8rem; }
+            .hunger-dot { width: 22px; height: 22px; }
+            .active-pet-emoji { font-size: 1.8rem; }
+            .tab-btn { font-size: 0.7rem; padding: 6px 0; }
+            .player-item { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .player-score { align-self: flex-end; }
         }
         .heart-rain {
             position: fixed;
@@ -426,14 +466,6 @@
         @keyframes fall {
             0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-        }
-        @media (max-width: 480px) {
-            .click-btn { width: 140px; height: 140px; }
-            .click-emoji { font-size: 2rem; }
-            .score-value { font-size: 2.8rem; }
-            .hunger-dot { width: 22px; height: 22px; }
-            .active-pet-emoji { font-size: 1.8rem; }
-            .tab-btn { font-size: 0.7rem; padding: 6px 0; }
         }
     </style>
 </head>
@@ -497,7 +529,7 @@
             </div>
         </div>
 
-        <!-- Вкладка Питомцы (аналогично предыдущему коду) -->
+        <!-- Вкладка Питомцы (аналогично) -->
         <div id="tab-pet" class="tab-content">
             <div class="pet-section">
                 <div class="active-pet-area" id="activePetArea"></div>
@@ -515,7 +547,7 @@
             </div>
         </div>
 
-        <!-- Вкладка Профиль (информация о пользователе, смена ника) -->
+        <!-- Вкладка Профиль -->
         <div id="tab-profile" class="tab-content">
             <div class="pet-section">
                 <div id="profileInfo" style="text-align: center;">
@@ -530,7 +562,7 @@
             </div>
         </div>
 
-        <!-- Вкладка Игроки -->
+        <!-- Вкладка Игроки (топ по очкам) -->
         <div id="tab-players" class="tab-content">
             <div class="players-list" id="playersList">Загрузка...</div>
         </div>
@@ -545,6 +577,12 @@
             </div>
             <footer>Прогресс сохраняется только в облаке</footer>
         </div>
+    </div>
+
+    <!-- Футер с подписью -->
+    <div class="global-footer">
+        <p>developed by Efich</p>
+        <p>Alfa V 0.0.5</p>
     </div>
 
     <script type="module">
@@ -1081,24 +1119,36 @@
             if (tabId === 'players') loadPlayersList();
         }
 
-        // ========== Список игроков ==========
+        // ========== Список игроков (ТОП по очкам) ==========
         async function loadPlayersList() {
             if (!playersListDiv) return;
             playersListDiv.innerHTML = 'Загрузка...';
             try {
                 const usersRef = collection(db, 'users');
-                const q = query(usersRef, orderBy('lastUpdated', 'desc'));
+                // Сортируем по полю score в порядке убывания (больше очков — выше)
+                const q = query(usersRef, orderBy('score', 'desc'));
                 const querySnapshot = await getDocs(q);
                 if (querySnapshot.empty) {
                     playersListDiv.innerHTML = 'Пока нет зарегистрированных игроков';
                     return;
                 }
                 let html = '';
+                let rank = 1;
                 for (const docSnap of querySnapshot.docs) {
                     const data = docSnap.data();
                     const email = data.userEmail || 'email не указан';
                     const nick = data.displayName || 'Без ника';
-                    html += `<div class="player-item"><span class="player-email">${escapeHtml(email)}</span><span class="player-nick">${escapeHtml(nick)}</span></div>`;
+                    const playerScore = data.score ?? 0;
+                    html += `
+                        <div class="player-item">
+                            <div class="player-info">
+                                <span class="player-email">${rank}. ${escapeHtml(email)}</span>
+                                <span class="player-nick">${escapeHtml(nick)}</span>
+                            </div>
+                            <div class="player-score">🍪 ${Math.floor(playerScore)}</div>
+                        </div>
+                    `;
+                    rank++;
                 }
                 playersListDiv.innerHTML = html;
             } catch (error) {
@@ -1152,19 +1202,16 @@
             regError.innerText = '';
         });
 
-        // Вход
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             authError.innerText = '';
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                // После успешного входа onAuthStateChanged покажет игру
             } catch (error) {
                 authError.innerText = error.message;
             }
         });
-        // Регистрация
         document.getElementById('registerBtn').addEventListener('click', async () => {
             const nick = document.getElementById('regNick').value.trim();
             const email = document.getElementById('regEmail').value;
@@ -1183,12 +1230,10 @@
             }
         });
 
-        // Выход
         logoutBtn.addEventListener('click', async () => {
             await signOut(auth);
         });
 
-        // Смена ника
         changeNickBtn.addEventListener('click', async () => {
             const newNick = changeNickInput.value.trim();
             if (!newNick) {
@@ -1206,10 +1251,8 @@
         // ========== Обработка состояния авторизации ==========
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // Пользователь вошёл: показываем игру, скрываем блок авторизации
                 authContainer.style.display = 'none';
                 gameContainer.style.display = 'block';
-                // Загружаем профиль
                 profileEmailSpan.textContent = user.email;
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists() && userDoc.data().displayName) {
@@ -1217,22 +1260,17 @@
                 } else {
                     profileNickSpan.textContent = 'не задан';
                 }
-                // Загружаем игровой прогресс
                 await loadGameProgress(user.uid);
-                // Запускаем таймеры (если ещё не запущены)
                 if (!intervalId) startAutoTick();
                 if (!hungerInterval) startHungerTick();
-                // Если список игроков открыт, обновить
                 if (document.getElementById('tab-players').classList.contains('active')) loadPlayersList();
             } else {
-                // Пользователь вышел: скрываем игру, показываем блок авторизации
                 if (intervalId) clearInterval(intervalId);
                 if (hungerInterval) clearInterval(hungerInterval);
                 intervalId = null;
                 hungerInterval = null;
                 gameContainer.style.display = 'none';
                 authContainer.style.display = 'block';
-                // Сбрасываем формы
                 loginFormDiv.style.display = 'block';
                 registerFormDiv.style.display = 'none';
                 authError.innerText = '';
@@ -1277,7 +1315,6 @@
 
         // ========== Старт ==========
         initTheme();
-        // Автозапуск таймеров будет после входа (см. onAuthStateChanged)
         document.body.addEventListener('click', () => {
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             else if (!audioCtx) initAudio();
